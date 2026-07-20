@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Aivsp.Application/Aivsp.Application.csproj" />
+    <Project Path="src/Aivsp.Domain/Aivsp.Domain.csproj" />
+    <Project Path="src/Aivsp.Infrastructure.Inference/Aivsp.Infrastructure.Inference.csproj" />
+    <Project Path="src/Aivsp.Infrastructure.Windows/Aivsp.Infrastructure.Windows.csproj" />
+    <Project Path="src/Aivsp.Presentation.Wpf/Aivsp.Presentation.Wpf.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Aivsp.Application.Tests/Aivsp.Application.Tests.csproj" />
+    <Project Path="tests/Aivsp.Domain.Tests/Aivsp.Domain.Tests.csproj" />
+    <Project Path="tests/Aivsp.Infrastructure.Inference.Tests/Aivsp.Infrastructure.Inference.Tests.csproj" />
+    <Project Path="tests/Aivsp.Infrastructure.Windows.Tests/Aivsp.Infrastructure.Windows.Tests.csproj" />
+  </Folder>
+</Solution>

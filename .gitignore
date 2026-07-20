@@ -1,0 +1,66 @@
+# .NET build output
+**/[Bb]in/
+**/[Oo]bj/
+artifacts/
+publish/
+*.nupkg
+*.snupkg
+
+# Test and coverage output
+TestResults/
+.audit-test-results/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.xml
+coverage*.cobertura.xml
+
+# Generated project output
+outputs/
+logs/
+*.log
+*.etl
+*.inspect.ndjson
+
+# Local captures and recordings
+captures/
+screenshots/
+recordings/
+test-captures/
+capture-*.png
+screenshot-*.png
+recording-*.mp4
+test-capture-*
+
+# Temporary and backup files
+*.tmp
+*.temp
+*.bak
+*.old
+*.orig
+*.swp
+*.swo
+*~
+~$*
+
+# Visual Studio / IDE user state
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vscode/*.user
+
+# Local settings and secrets
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+appsettings.*.Local.json
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini

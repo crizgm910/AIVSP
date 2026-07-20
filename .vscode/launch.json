@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": ".NET Core Launch (WPF)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/src/Aivsp.Presentation.Wpf/bin/Debug/net8.0-windows10.0.19041.0/Aivsp.Presentation.Wpf.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/Aivsp.Presentation.Wpf",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        }
+    ]
+}

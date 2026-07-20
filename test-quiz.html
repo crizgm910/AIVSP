@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario de Prueba AIVSP</title>
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --accent-color: #3b82f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .instructions {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #bae6fd;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .question {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .option-item {
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .option-item input[type="radio"] {
+            margin-top: 0.3rem;
+            margin-right: 0.75rem;
+            cursor: pointer;
+        }
+
+        .option-label {
+            cursor: pointer;
+            flex-grow: 1;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            font-family: inherit;
+            box-sizing: border-box;
+            transition: border-color 0.15s ease-in-out;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .answers-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px dashed var(--border-color);
+        }
+
+        .toggle-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background-color: #2563eb;
+        }
+
+        #answers-block {
+            display: none;
+            margin-top: 1rem;
+            background-color: #fef3c7;
+            border: 1px solid #fde68a;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+        }
+
+        #answers-block.visible {
+            display: block;
+        }
+
+        .answer-key {
+            font-family: monospace;
+            background: rgba(0,0,0,0.05);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Cuestionario de Prueba AIVSP</h1>
+            <div class="instructions">
+                <strong>Atención:</strong> Este cuestionario es solo para pruebas locales de OCR, inferencia visual y overlay. No guarda datos en ningún servidor backend.
+            </div>
+        </header>
+
+        <!-- SECCIÓN A: Selección Múltiple -->
+        <h2 class="section-title">Sección A: Selección Múltiple</h2>
+        
+        <div class="card" id="question-1">
+            <div class="question">1. ¿Qué proceso biológico utilizan las plantas para convertir la luz solar en energía?</div>
+            <ul class="options-list">
+                <li class="option-item">
+                    <input type="radio" name="q1" id="option-1-a" value="A">
+                    <label class="option-label" for="option-1-a">A) Quimiosíntesis</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q1" id="option-1-b" value="B">
+                    <label class="option-label" for="option-1-b">B) Fotosíntesis</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q1" id="option-1-c" value="C">
+                    <label class="option-label" for="option-1-c">C) Respiración celular</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q1" id="option-1-d" value="D">
+                    <label class="option-label" for="option-1-d">D) Transpiración vegetal profunda</label>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card" id="question-2">
+            <div class="question">2. Selecciona la definición correcta de un Sistema operativo:</div>
+            <ul class="options-list">
+                <li class="option-item">
+                    <input type="radio" name="q2" id="option-2-a" value="A">
+                    <label class="option-label" for="option-2-a">A) Es el hardware físico donde se ejecuta todo</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q2" id="option-2-b" value="B">
+                    <label class="option-label" for="option-2-b">B) Es un sistema que repara el disco duro automáticamente</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q2" id="option-2-c" value="C">
+                    <label class="option-label" for="option-2-c">C) Es el software base que gestiona los recursos de hardware y software</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q2" id="option-2-d" value="D">
+                    <label class="option-label" for="option-2-d">D) Es el gestor exclusivo de la tarjeta gráfica externa</label>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card" id="question-3">
+            <div class="question">3. ¿Qué caracteriza a una Base de datos relacional?</div>
+            <ul class="options-list">
+                <li class="option-item">
+                    <input type="radio" name="q3" id="option-3-a" value="A">
+                    <label class="option-label" for="option-3-a">A) Guarda datos no estructurados en formato JSON</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q3" id="option-3-b" value="B">
+                    <label class="option-label" for="option-3-b">B) Almacena información en tablas con filas y columnas que se relacionan entre sí</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q3" id="option-3-c" value="C">
+                    <label class="option-label" for="option-3-c">C) Almacena información en tablas de grafos conectadas</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q3" id="option-3-d" value="D">
+                    <label class="option-label" for="option-3-d">D) No permite la ejecución de consultas mediante SQL</label>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card" id="question-4">
+            <div class="question">4. El patrón Clean Architecture se caracteriza principalmente por:</div>
+            <ul class="options-list">
+                <li class="option-item">
+                    <input type="radio" name="q4" id="option-4-a" value="A">
+                    <label class="option-label" for="option-4-a">A) Depender fuertemente de la base de datos en todas las capas</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q4" id="option-4-b" value="B">
+                    <label class="option-label" for="option-4-b">B) Usar frameworks UI para definir la lógica de negocio central</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q4" id="option-4-c" value="C">
+                    <label class="option-label" for="option-4-c">C) La regla de dependencia: el código fuente solo puede apuntar hacia adentro</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q4" id="option-4-d" value="D">
+                    <label class="option-label" for="option-4-d">D) La regla de independencia: el código fuente solo puede apuntar hacia afuera</label>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card" id="question-5">
+            <div class="question">5. ¿Qué tecnología se usó en AIVSP para leer la pantalla de forma nativa sin asignar memoria manejada?</div>
+            <ul class="options-list">
+                <li class="option-item">
+                    <input type="radio" name="q5" id="option-5-a" value="A">
+                    <label class="option-label" for="option-5-a">A) Windows Media OCR combinado con IMemoryBufferByteAccess</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q5" id="option-5-b" value="B">
+                    <label class="option-label" for="option-5-b">B) System.Drawing.Bitmap y Tesseract OCR</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q5" id="option-5-c" value="C">
+                    <label class="option-label" for="option-5-c">C) Windows Media OCG con MemoryStreamBuffers</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q5" id="option-5-d" value="D">
+                    <label class="option-label" for="option-5-d">D) Cloud Vision API de Google</label>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card" id="question-6">
+            <div class="question">6. ¿Qué componente se encarga de servir modelos LLM de forma local en el proyecto?</div>
+            <ul class="options-list">
+                <li class="option-item">
+                    <input type="radio" name="q6" id="option-6-a" value="A">
+                    <label class="option-label" for="option-6-a">A) OpenAI API local</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q6" id="option-6-b" value="B">
+                    <label class="option-label" for="option-6-b">B) Ollama local</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q6" id="option-6-c" value="C">
+                    <label class="option-label" for="option-6-c">C) LocalOllama API</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q6" id="option-6-d" value="D">
+                    <label class="option-label" for="option-6-d">D) LlamaCPP Engine nativo en C#</label>
+                </li>
+            </ul>
+        </div>
+
+        <!-- SECCIÓN B: Preguntas Abiertas -->
+        <h2 class="section-title">Sección B: Preguntas Abiertas</h2>
+
+        <div class="card" id="open-question-1">
+            <div class="question">7. ¿Cuál es el puerto por defecto en el que se ejecuta la API de Ollama?</div>
+            <input type="text" class="form-control" id="open-answer-1" placeholder="Respuesta corta">
+        </div>
+
+        <div class="card" id="open-question-2">
+            <div class="question">8. Menciona al menos dos banderas (flags) de la Win32 API usadas en el OverlayWindow para permitir click-through.</div>
+            <input type="text" class="form-control" id="open-answer-2" placeholder="Escribe tu respuesta aquí">
+        </div>
+
+        <div class="card" id="open-question-3">
+            <div class="question">9. Explica brevemente por qué es peligroso no liberar handles GDI con la función DeleteObject.</div>
+            <textarea class="form-control" id="open-answer-3" placeholder="Explica brevemente..."></textarea>
+        </div>
+
+        <div class="card" id="open-question-4">
+            <div class="question">10. ¿Cuál fue el mayor reto al tratar de evitar usar Reflection en las llamadas a Ollama?</div>
+            <textarea class="form-control" id="open-answer-4" placeholder="Escribe tus observaciones detalladas..."></textarea>
+        </div>
+
+        <!-- SECCIÓN C: Casos difíciles -->
+        <h2 class="section-title">Sección C: Casos Difíciles y Scroll</h2>
+
+        <div class="card" id="hard-question-1">
+            <div class="question">11. Prueba matemática de reconocimiento (Números y símbolos):<br>Si tenemos 15 manzanas y repartimos 3/5 a nuestros 2 amigos, ¿Cuántas manzanas restan?</div>
+            <ul class="options-list">
+                <li class="option-item">
+                    <input type="radio" name="q11" id="option-11-a" value="A">
+                    <label class="option-label" for="option-11-a">A) 3 manzanas</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q11" id="option-11-b" value="B">
+                    <label class="option-label" for="option-11-b">B) 6 manzanas</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q11" id="option-11-c" value="C">
+                    <label class="option-label" for="option-11-c">C) 9 manzanas</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q11" id="option-11-d" value="D">
+                    <label class="option-label" for="option-11-d">D) 12 manzanas</label>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card" id="hard-question-2">
+            <div class="question">12. Acentos, diéresis y signos ortográficos difíciles: ¿Cómo se escribe el término que define a una persona bilingüe que traduce simultáneamente?</div>
+            <ul class="options-list">
+                <li class="option-item">
+                    <input type="radio" name="q12" id="option-12-a" value="A">
+                    <label class="option-label" for="option-12-a">A) Intérprete lingüístico</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q12" id="option-12-b" value="B">
+                    <label class="option-label" for="option-12-b">B) Pingüino bilingüe</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q12" id="option-12-c" value="C">
+                    <label class="option-label" for="option-12-c">C) Intérprete lïngüistícó</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q12" id="option-12-d" value="D">
+                    <label class="option-label" for="option-12-d">D) Cüentacüentos bilingue</label>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card" id="hard-question-3">
+            <div class="question">13. Opción en múltiples líneas debido a una gran cantidad de texto que genera wrap y complica la lectura de la coordenada Y:</div>
+            <ul class="options-list">
+                <li class="option-item">
+                    <input type="radio" name="q13" id="option-13-a" value="A">
+                    <label class="option-label" for="option-13-a">A) El diseño de microservicios distribuidos mediante orquestación de Kubernetes, que implica despliegues blue-green constantes.</label>
+                </li>
+                <li class="option-item">
+                    <input type="radio" name="q13" id="option-13-b" value="B">
+                    <label class="option-label" for="option-13-b">B) Una arquitectura monolítica con fuerte acoplamiento a procedimientos almacenados y lógica de negocio codificada en disparadores (triggers).</label>
+                </li>
+            </ul>
+        </div>
+
+        <div class="answers-section">
+            <button class="toggle-btn" id="toggle-answers">Mostrar / ocultar respuestas de prueba</button>
+            <div id="answers-block">
+                <h3>Respuestas Correctas y Esperadas (Guía para QA)</h3>
+                <ul>
+                    <li><strong>Q1:</strong> <span class="answer-key">B) Fotosíntesis</span></li>
+                    <li><strong>Q2:</strong> <span class="answer-key">C) Es el software base...</span></li>
+                    <li><strong>Q3:</strong> <span class="answer-key">B) Almacena información en tablas...</span></li>
+                    <li><strong>Q4:</strong> <span class="answer-key">C) La regla de dependencia...</span></li>
+                    <li><strong>Q5:</strong> <span class="answer-key">A) Windows Media OCR...</span></li>
+                    <li><strong>Q6:</strong> <span class="answer-key">B) Ollama local</span></li>
+                    <li><strong>Q7:</strong> <span class="answer-key">11434</span></li>
+                    <li><strong>Q8:</strong> <span class="answer-key">WS_EX_TRANSPARENT, WS_EX_NOACTIVATE</span></li>
+                    <li><strong>Q9:</strong> <span class="answer-key">Causa memory leaks en el kernel...</span></li>
+                    <li><strong>Q10:</strong> <span class="answer-key">Implementar Source Generators y pre-compilar los modelos JSON.</span></li>
+                    <li><strong>Q11:</strong> <span class="answer-key">B) 6 manzanas</span></li>
+                    <li><strong>Q12:</strong> <span class="answer-key">A) Intérprete lingüístico</span></li>
+                    <li><strong>Q13:</strong> Cualquiera es válida. Evalúa el OCR para cajas multilínea.</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.getElementById('toggle-answers').addEventListener('click', function() {
+            var block = document.getElementById('answers-block');
+            if (block.classList.contains('visible')) {
+                block.classList.remove('visible');
+            } else {
+                block.classList.add('visible');
+            }
+        });
+    </script>
+</body>
+</html>
