@@ -117,6 +117,8 @@ Sin cambios registrados después de la candidata beta.
   de Windows; sólo errores, advertencias y cancelaciones requieren atención visible.
 - El paquete beta publicado inició con mutex, hotkey, puente loopback y `VLM=false`;
   su prueba de humo real con Gemini resolvió `B) París` con confianza 1.0 en 4.076 s.
+- GitHub Actions valida la candidata en Windows y publica su ZIP como artefacto; el
+  disparador evita duplicar la misma ejecución entre la rama y su pull request.
 
 ### Limitaciones conocidas
 

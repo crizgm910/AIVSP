@@ -13,7 +13,7 @@ Fecha de evaluación: 29 de julio de 2026.
 | Dependencias | Aprobada | Sin vulnerabilidades NuGet conocidas |
 | Repositorio | Aprobada | `.gitignore`, sin artefactos rastreados ni credenciales incluidas |
 | Publicación `win-x64` | Aprobada | ZIP beta iniciado; mutex, hotkey, configuración y VLM verificados |
-| CI de la rama | Pendiente | Subir la candidata y comprobar GitHub Actions |
+| CI de la rama | Aprobada | GitHub Actions validó y publicó el artefacto del PR |
 
 ## Flujos incluidos en la beta
 
@@ -56,3 +56,5 @@ funciones disponibles.
   activo, configuración cargada y `VLM=false`.
 - Smoke test real del binario: Gemini CLI resolvió `B) París` con confianza `1.0` en
   4.076 s mediante `/v1/assist`.
+- GitHub Actions: las ejecuciones de push y PR del commit `54dd26b` aprobaron formato,
+  Release, pruebas no interactivas, extensión, publicación y carga del artefacto.

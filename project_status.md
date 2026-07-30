@@ -67,6 +67,8 @@ código está separado en Domain, Application, Infrastructure y Presentation (WP
 - ✅ Publicación autocontenida `win-x64` reproducible y validada fuera de `bin/obj`:
   ZIP beta de aproximadamente 90 MB, versión de producto `0.2.0-beta.1` y versión de
   archivo `0.2.0.1`.
+- ✅ GitHub Actions valida formato, extensión, Release, pruebas no interactivas,
+  publicación autocontenida y carga del ZIP en cada PR y al integrar en `main`.
 - ✅ Q14 (`12 + 8`) validada físicamente: `C) 20` en 186 ms sin solicitud HTTP a Ollama.
 - ✅ Q9 validada físicamente: respuesta abierta en español y autopegado correcto en 5.926 s.
 - ✅ DSP-02 aprobado físicamente a 125 %: cinco ejecuciones consecutivas, tres posiciones
