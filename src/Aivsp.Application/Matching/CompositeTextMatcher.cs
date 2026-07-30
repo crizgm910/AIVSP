@@ -28,7 +28,7 @@ public class CompositeTextMatcher : ITextMatcher
                 continue;
 
             double score = CalculateSimilarity(normalizedTarget, normalizedCandidate);
-            
+
             if (bestMatch == null || score > bestMatch.Score)
             {
                 secondBestMatch = bestMatch;

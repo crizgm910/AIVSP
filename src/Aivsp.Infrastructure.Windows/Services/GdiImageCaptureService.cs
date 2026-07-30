@@ -91,20 +91,31 @@ public class GdiImageCaptureService : IImageCaptureService
             }
 
             var metadata = new ImageMetadata(width, height, stride, PixelFormat.Bgra32, 96, 96);
-            
+
             // Context
-            NativeMethods.GetWindowThreadProcessId(hwnd, out uint pid);
+            var windowIdentity = Win32ActiveWindowContextService.ReadIdentity(hwnd);
+            var pid = windowIdentity.ProcessId;
             string processName = "";
-            try {
-                using var p = Process.GetProcessById((int)pid);
+            try
+            {
+                using var p = Process.GetProcessById(pid);
                 processName = p.ProcessName;
-            } catch { }
+            }
+            catch { }
 
             var sb = new StringBuilder(256);
             NativeMethods.GetWindowText(hwnd, sb, sb.Capacity);
             string windowTitle = sb.ToString();
 
-            var context = new CaptureContext(processName, windowTitle, DateTime.Now, rect.left, rect.top);
+            var context = new CaptureContext(
+                processName,
+                windowTitle,
+                DateTime.UtcNow,
+                rect.left,
+                rect.top,
+                windowIdentity.WindowHandle,
+                windowIdentity.ProcessId,
+                windowIdentity.FocusedControlHandle);
 
             return new CapturedImage(buffer, size, metadata, context);
         }

@@ -1,14 +1,15 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Xunit;
 using Aivsp.Infrastructure.Windows.Services;
+using Xunit;
 
 namespace Aivsp.Infrastructure.Windows.Tests;
 
 public class GdiImageCaptureServiceTests
 {
     [Fact]
+    [Trait("Category", "InteractiveWindows")]
     public async Task CaptureActiveWindowAsync_ShouldReturnValidImage()
     {
         var service = new GdiImageCaptureService();
@@ -21,9 +22,12 @@ public class GdiImageCaptureServiceTests
         Assert.True(image.Metadata.Width > 0);
         Assert.True(image.Metadata.Height > 0);
         Assert.NotNull(image.Context.WindowTitle);
+        Assert.NotEqual(0, image.Context.WindowHandle);
+        Assert.True(image.Context.ProcessId > 0);
     }
 
     [Fact]
+    [Trait("Category", "InteractiveWindows")]
     public async Task CaptureActiveWindowAsync_StressTest_ShouldNotLeakMemory()
     {
         var service = new GdiImageCaptureService();
@@ -38,6 +42,6 @@ public class GdiImageCaptureServiceTests
         // We just ensure it doesn't crash or throw exceptions due to GDI exhaustion.
         // ArrayPool might hold onto buffers, so strict memory assertions might be flaky,
         // but the main goal is no GDI leak exceptions.
-        Assert.True(true); 
+        Assert.True(true);
     }
 }

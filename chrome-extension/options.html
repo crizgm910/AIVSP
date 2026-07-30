@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIVSP DOM Assistant</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <h1>AIVSP DOM Assistant</h1>
+    <p>
+      Esta extensión sólo lee la pregunta que seleccionas y la envía a AIVSP mediante
+      <code>127.0.0.1</code>. No contiene credenciales de Gemini ni Ollama.
+    </p>
+
+    <label for="bridge-token">Token local</label>
+    <input
+      id="bridge-token"
+      type="password"
+      spellcheck="false"
+      autocomplete="off"
+      placeholder="64 caracteres hexadecimales">
+    <p class="hint">
+      En AIVSP: bandeja → <strong>Copiar token para extensión Chrome</strong>.
+    </p>
+
+    <label class="checkbox">
+      <input id="apply-answers" type="checkbox">
+      Aplicar la respuesta al radio o campo después de validar que la pregunta no cambió
+    </label>
+
+    <div class="actions">
+      <button id="save" type="button">Guardar</button>
+      <button id="test" type="button" class="secondary">Probar conexión</button>
+    </div>
+    <output id="status" aria-live="polite"></output>
+
+    <section>
+      <h2>Uso</h2>
+      <ol>
+        <li>Habilita <strong>Integración Chrome (DOM)</strong> en la bandeja de AIVSP.</li>
+        <li>Abre una página con una pregunta.</li>
+        <li>Presiona <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Y</kbd>.</li>
+        <li>Haz clic una vez en la tarjeta de la pregunta.</li>
+      </ol>
+      <p class="hint">
+        Si Chrome no asigna el atajo, abre <code>chrome://extensions/shortcuts</code>
+        y asígnalo a <strong>Armar la selección de una pregunta</strong>. También
+        puedes pulsar el icono de AIVSP DOM Assistant.
+      </p>
+    </section>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

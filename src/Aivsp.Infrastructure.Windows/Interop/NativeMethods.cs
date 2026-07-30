@@ -45,15 +45,33 @@ internal static class NativeMethods
 
     [DllImport("gdi32.dll")]
     public static extern int GetDIBits(IntPtr hdc, IntPtr hbmp, uint uStartScan, uint cScanLines, ref byte lpvBits, ref BITMAPINFO lpbi, uint uUsage);
-    
+
     [DllImport("user32.dll", SetLastError = true)]
     public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetGUIThreadInfo(uint idThread, ref GUITHREADINFO lpgui);
 
     [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
 
     public const int SRCCOPY = 0x00CC0020;
     public const int DIB_RGB_COLORS = 0;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct GUITHREADINFO
+{
+    public int cbSize;
+    public uint flags;
+    public IntPtr hwndActive;
+    public IntPtr hwndFocus;
+    public IntPtr hwndCapture;
+    public IntPtr hwndMenuOwner;
+    public IntPtr hwndMoveSize;
+    public IntPtr hwndCaret;
+    public RECT rcCaret;
 }
 
 [StructLayout(LayoutKind.Sequential)]

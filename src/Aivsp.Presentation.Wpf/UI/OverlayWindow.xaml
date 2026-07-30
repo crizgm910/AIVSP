@@ -4,6 +4,7 @@
         Title="AIVSP Overlay"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize"
+        ShowActivated="False" Focusable="False" IsHitTestVisible="False"
         WindowStartupLocation="Manual">
     <Canvas Name="MainCanvas" Background="Transparent">
         <Border x:Name="IndicatorBorder"

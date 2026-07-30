@@ -1,0 +1,60 @@
+name: Beta validation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Restore
+        run: dotnet restore Aivsp.slnx
+
+      - name: Validate Chrome extension
+        shell: pwsh
+        run: ./scripts/validate-chrome-extension.ps1
+
+      - name: Verify formatting
+        run: dotnet format Aivsp.slnx --verify-no-changes --no-restore
+
+      - name: Build Release
+        run: dotnet build Aivsp.slnx --configuration Release --no-restore
+
+      - name: Test non-interactive suites
+        run: >-
+          dotnet test Aivsp.slnx
+          --configuration Release
+          --no-build
+          --filter "Category!=InteractiveWindows"
+
+      - name: Publish Windows x64 candidate
+        shell: pwsh
+        run: ./scripts/publish-win-x64.ps1
+
+      - name: Upload candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIVSP-windows-x64
+          path: artifacts/publish/*.zip
+          if-no-files-found: error

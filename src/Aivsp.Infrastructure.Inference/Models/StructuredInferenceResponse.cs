@@ -18,10 +18,10 @@ public class StructuredInferenceResponse
 
     [JsonPropertyName("suggestedText")]
     public string? SuggestedText { get; set; }
-    
+
     [JsonPropertyName("suggestedX")]
     public double? SuggestedX { get; set; }
-    
+
     [JsonPropertyName("suggestedY")]
     public double? SuggestedY { get; set; }
 

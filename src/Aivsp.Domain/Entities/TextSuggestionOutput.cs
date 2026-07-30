@@ -10,7 +10,7 @@ public class TextSuggestionOutput : AssistanceOutput
     public double SuggestedWidth { get; }
     public double SuggestedHeight { get; }
 
-    public TextSuggestionOutput(string rawResponse, double confidence, TimeSpan duration, string suggestedText, double x, double y, double width, double height) 
+    public TextSuggestionOutput(string rawResponse, double confidence, TimeSpan duration, string suggestedText, double x, double y, double width, double height)
         : base(rawResponse, confidence, duration)
     {
         SuggestedText = suggestedText;
