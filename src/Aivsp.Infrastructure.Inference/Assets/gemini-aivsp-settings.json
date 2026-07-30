@@ -1,0 +1,22 @@
+{
+  "telemetry": {
+    "enabled": false
+  },
+  "modelConfigs": {
+    "customAliases": {
+      "aivsp-fast": {
+        "modelConfig": {
+          "model": "gemini-3.1-flash-lite",
+          "generateContentConfig": {
+            "temperature": 0,
+            "maxOutputTokens": 256,
+            "thinkingConfig": {
+              "thinkingBudget": 0,
+              "includeThoughts": false
+            }
+          }
+        }
+      }
+    }
+  }
+}

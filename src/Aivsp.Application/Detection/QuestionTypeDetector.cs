@@ -37,7 +37,7 @@ public class QuestionTypeDetector : IQuestionTypeDetector
         // Basic heuristics for MultipleChoice
         var mcqPattern = new Regex(@"([a-eA-E]\s*[\.\-\)])|(o\s+[a-eA-E]\s*[\.\-\)])|([O0]\s+[a-eA-E]\s*[\.\-\)])|(opci[oó]n\s+[a-eA-E])", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         var bulletMatches = mcqPattern.Matches(fullText);
-        
+
         if (bulletMatches.Count >= 2 || lowerText.Contains("selecciona") || lowerText.Contains("elige la") || lowerText.Contains("opción correcta"))
         {
             return new AssistanceDetectionResult(AssistanceMode.MultipleChoice, ocrResults, image);

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIVSP DOM Assistant - Test Harness</title>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 32px; background: #f1f5f9; }
+    button { margin: 0 8px 24px 0; padding: 8px 12px; }
+    .question-card { max-width: 720px; margin-bottom: 24px; padding: 20px; background: white; }
+    label { display: block; margin: 10px 0; }
+    textarea { box-sizing: border-box; min-height: 100px; width: 100%; }
+    .forms-like input[type="radio"] {
+      height: 1px;
+      opacity: 0;
+      position: absolute;
+      width: 1px;
+    }
+  </style>
+  <script>
+    "use strict";
+
+    window.__aivspMessageListener = null;
+    window.chrome = {
+      runtime: {
+        onMessage: {
+          addListener(listener) {
+            window.__aivspMessageListener = listener;
+          }
+        },
+        async sendMessage(message) {
+          document.body.dataset.lastPayload = JSON.stringify(message.payload);
+          if (message.payload.question.includes("baja confianza")) {
+            return {
+              ok: true,
+              applyAnswers: true,
+              result: {
+                mode: 2,
+                optionKey: null,
+                answer: "Respuesta que requiere revisión.",
+                confidence: 0.4,
+                overlayProfile: 1
+              }
+            };
+          }
+          if (message.payload.question.includes("cambiará")) {
+            setTimeout(() => {
+              document.querySelector("#changing-question").textContent =
+                "Esta pregunta ya cambió antes de responder.";
+            }, 10);
+            await new Promise((resolve) => setTimeout(resolve, 40));
+          }
+          if (message.payload.mode === 1) {
+            return {
+              ok: true,
+              applyAnswers: true,
+              result: {
+                mode: 1,
+                optionKey: "C",
+                answer: "C) París",
+                confidence: 0.98,
+                overlayProfile: 0
+              }
+            };
+          }
+          return {
+            ok: true,
+            applyAnswers: true,
+            result: {
+              mode: 2,
+              optionKey: null,
+              answer: "Una respuesta abierta validada.",
+              confidence: 0.96,
+              overlayProfile: 1
+            }
+          };
+        }
+      }
+    };
+
+    function beginSelection() {
+      window.__aivspMessageListener?.({ type: "AIVSP_BEGIN_SELECTION" });
+    }
+
+  </script>
+</head>
+<body>
+  <button id="start-multiple" type="button" onclick="beginSelection()">
+    Probar opción múltiple
+  </button>
+  <button id="start-open" type="button" onclick="beginSelection()">
+    Probar pregunta abierta
+  </button>
+  <button id="start-changing" type="button" onclick="beginSelection()">
+    Probar cambio de contexto
+  </button>
+  <button id="start-aria" type="button" onclick="beginSelection()">
+    Probar radios ARIA
+  </button>
+  <button id="start-contenteditable" type="button" onclick="beginSelection()">
+    Probar campo ARIA
+  </button>
+  <button id="start-low-confidence" type="button" onclick="beginSelection()">
+    Probar baja confianza
+  </button>
+
+  <section id="multiple-card" class="question-card forms-like">
+    <h2 class="question">¿Cuál es la capital de Francia?</h2>
+    <div>
+      <div>
+        <label><input type="radio" name="capital" value="A"><span>A) Madrid</span></label>
+        <label><input type="radio" name="capital" value="B"><span>B) Roma</span></label>
+        <label><input id="correct-option" type="radio" name="capital" value="C"><span>C) París</span></label>
+        <label><input type="radio" name="capital" value="D"><span>D) Lisboa</span></label>
+      </div>
+    </div>
+  </section>
+
+  <section id="open-card" class="question-card">
+    <h2 class="question">Explica brevemente qué es una prueba automatizada.</h2>
+    <textarea id="open-answer" placeholder="Escribe una respuesta breve"></textarea>
+  </section>
+
+  <section id="changing-card" class="question-card">
+    <h2 id="changing-question" class="question">
+      Esta pregunta cambiará mientras se procesa.
+    </h2>
+    <label><input type="radio" name="changing" value="A"> A) Primera</label>
+    <label><input type="radio" name="changing" value="B"> B) Segunda</label>
+    <label><input id="changing-option" type="radio" name="changing" value="C"> C) Tercera</label>
+  </section>
+
+  <section id="aria-card" class="question-card">
+    <h2 class="question">¿Qué protocolo protege una conexión web?</h2>
+    <div role="radiogroup" aria-label="Opciones de protocolo">
+      <div role="radio" aria-checked="false" data-value="A"
+           onclick="this.setAttribute('aria-checked', 'true')">A) FTP</div>
+      <div role="radio" aria-checked="false" data-value="B"
+           onclick="this.setAttribute('aria-checked', 'true')">B) Telnet</div>
+      <div id="aria-correct-option" role="radio" aria-checked="false" data-value="C"
+           onclick="this.setAttribute('aria-checked', 'true')">C) HTTPS</div>
+    </div>
+  </section>
+
+  <section id="contenteditable-card" class="question-card">
+    <h2 class="question">Define brevemente qué es HTTPS.</h2>
+    <div id="contenteditable-answer" role="textbox" contenteditable="true"
+         aria-label="Escribe una definición breve"></div>
+  </section>
+
+  <section id="low-confidence-card" class="question-card">
+    <h2 class="question">Pregunta abierta de baja confianza.</h2>
+    <textarea id="low-confidence-answer"
+              placeholder="No debe autoaplicarse"></textarea>
+  </section>
+
+  <script src="../chrome-extension/content-script.js"></script>
+</body>
+</html>

@@ -25,4 +25,16 @@
     <ProjectReference Include="..\..\src\Aivsp.Application\Aivsp.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\..\src\Aivsp.Infrastructure.Inference\Assets\gemini-aivsp-system.md"
+             Link="gemini-aivsp-system.md"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\Aivsp.Infrastructure.Inference\Assets\gemini-aivsp-policy.toml"
+             Link="gemini-aivsp-policy.toml"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\Aivsp.Infrastructure.Inference\Assets\gemini-aivsp-settings.json"
+             Link="gemini-aivsp-settings.json"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

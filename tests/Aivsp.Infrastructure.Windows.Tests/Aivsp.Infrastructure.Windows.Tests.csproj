@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -20,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Aivsp.Infrastructure.Windows\Aivsp.Infrastructure.Windows.csproj" />
+    <ProjectReference Include="..\..\src\Aivsp.Presentation.Wpf\Aivsp.Presentation.Wpf.csproj" />
   </ItemGroup>
 
 </Project>

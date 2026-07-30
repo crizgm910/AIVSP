@@ -1,11 +1,17 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Effects;
+using Aivsp.Application.Configuration;
 using Aivsp.Application.Geometry;
+using WpfBrushes = System.Windows.Media.Brushes;
+using WpfColor = System.Windows.Media.Color;
 
 namespace Aivsp.Presentation.Wpf.UI;
 
@@ -17,6 +23,9 @@ public partial class OverlayWindow : Window
     private const uint SWP_NOACTIVATE = 0x0010;
     private const uint SWP_SHOWWINDOW = 0x0040;
     private static readonly IntPtr HWND_TOPMOST = new(-1);
+    private readonly AssistantOptions _options;
+    private readonly Dictionary<FrameworkElement, long> _animationGenerations = new();
+    private long _nextAnimationGeneration;
 
     public PhysicalScreenBounds PhysicalBounds { get; }
 
@@ -41,9 +50,10 @@ public partial class OverlayWindow : Window
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetWindowRect(IntPtr hwnd, out WindowRect rect);
 
-    public OverlayWindow(PhysicalScreenBounds physicalBounds)
+    public OverlayWindow(PhysicalScreenBounds physicalBounds, AssistantOptions options)
     {
         PhysicalBounds = physicalBounds;
+        _options = options ?? throw new ArgumentNullException(nameof(options));
         InitializeComponent();
     }
 
@@ -59,6 +69,8 @@ public partial class OverlayWindow : Window
 
     public void ShowIndicator(int x, int y, int width, int height, int durationMs)
     {
+        EnsureShown();
+        var style = ApplyVisualProfile(durationMs);
         var context = GetCoordinateContext();
         var point = OverlayCoordinateMapper.ScreenToOverlay(
             x,
@@ -81,11 +93,13 @@ public partial class OverlayWindow : Window
         IndicatorBorder.Width = Math.Min(size.Width, ActualWidth);
         IndicatorBorder.Height = Math.Min(size.Height, ActualHeight);
 
-        StartFadeOut(IndicatorBorder, durationMs);
+        StartFadeOut(IndicatorBorder, style.DurationMilliseconds);
     }
 
     public void ShowTextSuggestion(string text, int x, int y, int durationMs)
     {
+        EnsureShown();
+        var style = ApplyVisualProfile(durationMs);
         var context = GetCoordinateContext();
         var point = OverlayCoordinateMapper.ScreenToOverlay(
             x,
@@ -107,20 +121,24 @@ public partial class OverlayWindow : Window
         Canvas.SetLeft(SuggestionBorder, actualX);
         Canvas.SetTop(SuggestionBorder, actualY);
 
-        StartFadeOut(SuggestionBorder, durationMs);
+        StartFadeOut(SuggestionBorder, style.DurationMilliseconds);
     }
 
     public void HideAll()
     {
+        _animationGenerations.Clear();
         HideElement(IndicatorBorder);
         HideElement(SuggestionBorder);
+        Hide();
     }
 
-    private static void StartFadeOut(FrameworkElement element, int durationMs)
+    private void StartFadeOut(FrameworkElement element, int durationMs)
     {
         element.BeginAnimation(UIElement.OpacityProperty, null);
         element.Opacity = 1.0;
         element.Visibility = Visibility.Visible;
+        long generation = ++_nextAnimationGeneration;
+        _animationGenerations[element] = generation;
 
         var fadeOut = new DoubleAnimation
         {
@@ -130,7 +148,18 @@ public partial class OverlayWindow : Window
             FillBehavior = FillBehavior.HoldEnd
         };
 
-        fadeOut.Completed += (_, _) => HideElement(element);
+        fadeOut.Completed += (_, _) =>
+        {
+            if (!_animationGenerations.TryGetValue(element, out long currentGeneration) ||
+                currentGeneration != generation)
+            {
+                return;
+            }
+
+            _animationGenerations.Remove(element);
+            HideElement(element);
+            HideWindowIfIdle();
+        };
         element.BeginAnimation(UIElement.OpacityProperty, fadeOut, HandoffBehavior.SnapshotAndReplace);
     }
 
@@ -141,6 +170,68 @@ public partial class OverlayWindow : Window
         element.Visibility = Visibility.Collapsed;
         element.BeginAnimation(UIElement.OpacityProperty, null);
         element.Opacity = 1.0;
+    }
+
+    private void EnsureShown()
+    {
+        if (!IsVisible)
+        {
+            Show();
+        }
+    }
+
+    private void HideWindowIfIdle()
+    {
+        if (IndicatorBorder.Visibility != Visibility.Visible &&
+            SuggestionBorder.Visibility != Visibility.Visible)
+        {
+            Hide();
+        }
+    }
+
+    private OverlayStyleSettings ApplyVisualProfile(int requestedDurationMilliseconds)
+    {
+        var style = OverlayStyleResolver.Resolve(_options, requestedDurationMilliseconds);
+
+        IndicatorBorder.BorderThickness = new Thickness(style.IndicatorBorderThickness);
+        IndicatorBorder.Background = new SolidColorBrush(
+            WpfColor.FromArgb(style.IndicatorFillAlpha, 0, 255, 0));
+        IndicatorBorder.BorderBrush = _options.OverlayProfile == OverlayProfile.Subtle
+            ? new SolidColorBrush(WpfColor.FromArgb(0xB3, 50, 205, 50))
+            : WpfBrushes.LimeGreen;
+        IndicatorBorder.Effect = style.IndicatorShadowEnabled
+            ? new DropShadowEffect
+            {
+                Color = Colors.LimeGreen,
+                BlurRadius = 20,
+                ShadowDepth = 0,
+                Opacity = 1
+            }
+            : null;
+
+        SuggestionBorder.BorderThickness = new Thickness(style.SuggestionBorderThickness);
+        SuggestionBorder.Background = new SolidColorBrush(
+            WpfColor.FromArgb(style.SuggestionBackgroundAlpha, 0, 0, 0));
+        SuggestionBorder.BorderBrush = _options.OverlayProfile == OverlayProfile.Subtle
+            ? new SolidColorBrush(WpfColor.FromArgb(0x80, 0, 191, 255))
+            : WpfBrushes.DeepSkyBlue;
+        SuggestionBorder.CornerRadius = _options.OverlayProfile == OverlayProfile.Subtle
+            ? new CornerRadius(4)
+            : new CornerRadius(8);
+        SuggestionBorder.Padding = new Thickness(style.SuggestionPadding);
+        SuggestionBorder.MaxWidth = style.SuggestionMaximumWidth;
+        SuggestionBorder.Effect = style.SuggestionShadowEnabled
+            ? new DropShadowEffect
+            {
+                Color = Colors.DeepSkyBlue,
+                BlurRadius = 15,
+                ShadowDepth = 0,
+                Opacity = 0.8
+            }
+            : null;
+        SuggestionText.FontSize = style.SuggestionFontSize;
+
+        return style;
     }
 
     private void ConfigureMonitorBounds(IntPtr hwnd)

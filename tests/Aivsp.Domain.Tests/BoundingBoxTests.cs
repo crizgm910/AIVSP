@@ -1,6 +1,6 @@
 using System;
-using Xunit;
 using Aivsp.Domain.ValueObjects;
+using Xunit;
 
 namespace Aivsp.Domain.Tests;
 

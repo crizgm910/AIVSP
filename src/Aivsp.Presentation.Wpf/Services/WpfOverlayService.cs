@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using Aivsp.Application.Configuration;
 using Aivsp.Application.Contracts;
 using Aivsp.Application.Geometry;
 using Aivsp.Domain.Entities;
@@ -14,7 +15,13 @@ namespace Aivsp.Presentation.Wpf.Services;
 public class WpfOverlayService : IOverlayService, IDisposable
 {
     private readonly List<OverlayWindow> _overlayWindows = new();
+    private readonly AssistantOptions _options;
     private bool _initialized;
+
+    public WpfOverlayService(AssistantOptions options)
+    {
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+    }
 
     public void Initialize()
     {
@@ -106,9 +113,15 @@ public class WpfOverlayService : IOverlayService, IDisposable
 
         foreach (var screen in screens)
         {
-            var bounds = screen.Bounds;
-            var overlay = new OverlayWindow(new PhysicalScreenBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height));
+            // A transparent topmost window must never overlap taskbars or docked
+            // desktop toolbars. Some DWM/GPU combinations render a residual strip
+            // at that boundary even when every child is collapsed.
+            var bounds = screen.WorkingArea;
+            var overlay = new OverlayWindow(
+                new PhysicalScreenBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height),
+                _options);
             overlay.Show();
+            overlay.HideAll();
             _overlayWindows.Add(overlay);
         }
 

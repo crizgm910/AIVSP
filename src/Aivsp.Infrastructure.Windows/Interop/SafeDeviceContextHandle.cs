@@ -10,7 +10,7 @@ internal class SafeDeviceContextHandle : SafeHandleZeroOrMinusOneIsInvalid
 
     private SafeDeviceContextHandle() : base(true) { }
 
-    public SafeDeviceContextHandle(IntPtr preexistingHandle, bool ownsHandle, IntPtr hwnd = default, bool isCreated = false) 
+    public SafeDeviceContextHandle(IntPtr preexistingHandle, bool ownsHandle, IntPtr hwnd = default, bool isCreated = false)
         : base(ownsHandle)
     {
         SetHandle(preexistingHandle);

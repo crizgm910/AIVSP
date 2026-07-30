@@ -7,7 +7,7 @@ namespace Aivsp.Application.Contracts;
 public class InferenceRequest
 {
     public string Prompt { get; }
-    
+
     public InferenceRequest(string prompt)
     {
         Prompt = prompt;

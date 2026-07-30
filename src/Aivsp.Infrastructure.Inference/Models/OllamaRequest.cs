@@ -10,15 +10,21 @@ public class OllamaRequest
     [JsonPropertyName("prompt")]
     public string Prompt { get; set; } = string.Empty;
 
+    [JsonPropertyName("system")]
+    public string? System { get; set; }
+
     [JsonPropertyName("stream")]
     public bool Stream { get; set; }
-    
+
     [JsonPropertyName("format")]
     public string? Format { get; set; }
 
     [JsonPropertyName("keep_alive")]
     public string? KeepAlive { get; set; }
-    
+
+    [JsonPropertyName("think")]
+    public bool? Think { get; set; }
+
     [JsonPropertyName("images")]
     public string[]? Images { get; set; }
 

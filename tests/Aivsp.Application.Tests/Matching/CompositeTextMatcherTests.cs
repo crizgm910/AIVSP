@@ -1,11 +1,11 @@
-using System.Collections.Generic;
-using Xunit;
-using Aivsp.Application.Matching;
-using Aivsp.Application.Configuration;
-using Aivsp.Domain.Entities;
-using Aivsp.Domain.ValueObjects;
-using Aivsp.Domain.Enums;
 using System;
+using System.Collections.Generic;
+using Aivsp.Application.Configuration;
+using Aivsp.Application.Matching;
+using Aivsp.Domain.Entities;
+using Aivsp.Domain.Enums;
+using Aivsp.Domain.ValueObjects;
+using Xunit;
 
 namespace Aivsp.Application.Tests.Matching;
 
@@ -17,7 +17,7 @@ public class CompositeTextMatcherTests
         var matcher = new CompositeTextMatcher();
         var options = new AssistantOptions { MinimumMatchScore = 0.8, MinimumMatchMargin = 0.05 };
         var inference = new InferenceResult("raw", "Guardar", 1.0, TimeSpan.Zero);
-        
+
         var candidates = new List<OcrResult>
         {
             new OcrResult("Cancelar", new BoundingBox(0, 0, 10, 10), 1.0, OcrResultLevel.Word),
@@ -37,7 +37,7 @@ public class CompositeTextMatcherTests
         var matcher = new CompositeTextMatcher();
         var options = new AssistantOptions { MinimumMatchScore = 0.8, MinimumMatchMargin = 0.05 };
         var inference = new InferenceResult("raw", "Submit File", 1.0, TimeSpan.Zero);
-        
+
         var candidates = new List<OcrResult>
         {
             new OcrResult("> Submit   File...", new BoundingBox(10, 10, 10, 10), 1.0, OcrResultLevel.Word)
@@ -56,7 +56,7 @@ public class CompositeTextMatcherTests
         var matcher = new CompositeTextMatcher();
         var options = new AssistantOptions { MinimumMatchScore = 0.8, MinimumMatchMargin = 0.4 };
         var inference = new InferenceResult("raw", "Ok", 1.0, TimeSpan.Zero);
-        
+
         var candidates = new List<OcrResult>
         {
             new OcrResult("Ok", new BoundingBox(0, 0, 10, 10), 1.0, OcrResultLevel.Word),

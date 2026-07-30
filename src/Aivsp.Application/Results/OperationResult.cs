@@ -25,7 +25,7 @@ public class OperationResult<T> : OperationResult
 
     public T Value => IsSuccess ? _value! : throw new InvalidOperationException("Result is a failure.");
 
-    private OperationResult(bool isSuccess, T? value, ErrorCode errorCode, string? errorMessage) 
+    private OperationResult(bool isSuccess, T? value, ErrorCode errorCode, string? errorMessage)
         : base(isSuccess, errorCode, errorMessage)
     {
         _value = value;

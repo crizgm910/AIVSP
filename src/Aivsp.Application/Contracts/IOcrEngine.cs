@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Aivsp.Domain.Entities;
 using Aivsp.Application.Configuration;
+using Aivsp.Domain.Entities;
 
 namespace Aivsp.Application.Contracts;
 

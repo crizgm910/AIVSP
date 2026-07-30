@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Graphics.Imaging;
-using Windows.Media.Ocr;
 using Aivsp.Application.Configuration;
 using Aivsp.Application.Contracts;
 using Aivsp.Domain.Entities;
-using DomainOcrResult = Aivsp.Domain.Entities.OcrResult;
 using Aivsp.Domain.Enums;
 using Aivsp.Domain.ValueObjects;
+using Windows.Graphics.Imaging;
+using Windows.Media.Ocr;
+using DomainOcrResult = Aivsp.Domain.Entities.OcrResult;
 
 namespace Aivsp.Infrastructure.Windows.Ocr;
 
@@ -45,11 +45,11 @@ public class WindowsMediaOcrEngine : IOcrEngine
         }
 
         var softwareBitmap = new SoftwareBitmap(format, image.Metadata.Width, image.Metadata.Height, BitmapAlphaMode.Ignore);
-        
+
         CopyDataToBitmap(image, softwareBitmap);
 
         var result = await ocrEngine.RecognizeAsync(softwareBitmap).AsTask(cancellationToken);
-        
+
         var ocrResults = new List<DomainOcrResult>();
         foreach (var line in result.Lines)
         {
@@ -68,9 +68,9 @@ public class WindowsMediaOcrEngine : IOcrEngine
             var box = new BoundingBox(
                 image.Context.OriginX + (int)minX,
                 image.Context.OriginY + (int)minY,
-                (int)(maxX - minX), 
+                (int)(maxX - minX),
                 (int)(maxY - minY));
-                
+
             ocrResults.Add(new DomainOcrResult(line.Text, box, 1.0, OcrResultLevel.Line));
         }
 
