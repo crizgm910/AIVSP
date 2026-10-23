@@ -1,6 +1,6 @@
 # Estado del proyecto: AIVSP
 
-**Versión actual: `v0.2.0-beta.1`.**
+**Versión actual: `v0.2.0-beta.2`; extensión `0.2.9`.**
 
 Última revisión técnica: 23 de octubre de 2026.
 
@@ -8,9 +8,17 @@ Recuperación: el proyecto eliminado se recuperó desde `main` de GitHub en
 `C:\proyectos\AIVSP-recuperado`. Las correcciones locales de extensión hasta 0.2.9
 se reconstruyeron y sus regresiones JavaScript pasan. El usuario había confirmado
 la cruz/selección dentro de Teams; la detección y aplicación en una tarea real siguen
-pendientes. La migración a Antigravity se realiza después de este punto recuperable.
+pendientes. Antigravity ya está integrado y probado con `agy 1.4.6` y
+`gemini-3.8-flash-low`, sin borrar proveedores anteriores ni cambiar el token del
+navegador. Se selecciona desde la bandeja.
 
-Esta es la primera candidata beta del MVP avanzado: el flujo principal, sus protecciones
+Validación de esta recuperación: 165 pruebas .NET y regresiones de extensión
+aprobadas. El adaptador real resolvió preguntas abiertas y opción múltiple en
+6.7–9.8 s en la última ronda y pasó cancelación. El hook bloqueó una lectura de
+archivo antes de ejecutarla. El autopegado físico con el nuevo proveedor todavía
+requiere confirmación; los tiempos medidos no son garantía.
+
+Esta es la segunda candidata beta del MVP avanzado: el flujo principal, sus protecciones
 y su empaquetado cuentan con validación automatizada y pruebas físicas en un monitor.
 Las limitaciones indicadas en este documento impiden considerarla estable para producción.
 El historial de la versión está en
@@ -22,7 +30,7 @@ ejecución se mantienen en [`TASKS.md`](TASKS.md).
 ## Objetivo
 
 AIVSP es un asistente de escritorio para Windows. Captura la ventana activa, extrae
-texto, consulta el proveedor seleccionado —Ollama local o Gemini CLI— y muestra una
+texto, consulta el proveedor seleccionado —Ollama, Antigravity CLI o Gemini CLI— y muestra una
 indicación visual o pega una sugerencia de texto. En Chrome puede usar opcionalmente
 el DOM de la pregunta elegida con `Ctrl+Shift+Y` y clic izquierdo para evitar OCR,
 conservando OCR como respaldo. El
@@ -36,6 +44,8 @@ código está separado en Domain, Application, Infrastructure y Presentation (WP
 - Captura de la ventana activa con GDI/Win32 (`BitBlt`).
 - Ollama mediante `POST /api/generate` y respuestas JSON.
 - Gemini CLI opcional mediante un proceso no interactivo y respuesta JSON.
+- Antigravity CLI opcional: stdin UTF-8, salida estructurada, perfil limitado,
+  hook de denegación y cancelación del árbol de procesos.
 - xUnit y Moq para pruebas.
 
 ## Flujo actual
@@ -46,7 +56,7 @@ código está separado en Domain, Application, Infrastructure y Presentation (WP
 4. Después del OCR se aísla la tarjeta numerada bajo el cursor, desde su enunciado
    hasta antes de la siguiente pregunta. Esto evita mezclar respuestas vecinas.
 5. `QuestionTypeDetector` clasifica el contenido como opción múltiple o texto abierto.
-6. El proveedor seleccionado —Ollama local o Gemini CLI— devuelve JSON estructurado.
+6. El proveedor seleccionado —Ollama, Antigravity CLI o Gemini CLI— devuelve JSON estructurado.
 7. Se muestra un indicador sobre la respuesta o se pega/muestra texto sugerido.
 
 ## Estado validado
@@ -59,7 +69,7 @@ código está separado en Domain, Application, Infrastructure y Presentation (WP
 - ✅ Overlay sin el destello final que volvía a mostrar brevemente la respuesta.
 - ✅ Limpieza del overlay antes de cada captura para evitar que entre al siguiente OCR.
 - ✅ Auto-pegado opcional y controles básicos desde la bandeja.
-- ✅ 136 pruebas aprobadas; compilación Release con 0 errores y 0 advertencias.
+- ✅ 165 pruebas aprobadas; compilación Release con 0 errores y 0 advertencias.
 - ✅ Ollama local permanece como proveedor predeterminado.
 - ✅ Gemini CLI está integrado como proveedor opcional con salida JSON, cancelación,
   timeout, reintento, selección desde bandeja y pruebas automatizadas.
@@ -67,12 +77,12 @@ código está separado en Domain, Application, Infrastructure y Presentation (WP
   mínimo, sin sombra y duración reducida.
 - ✅ Proveedor, perfil, modelos, endpoint, idioma, tiempos y autopegado se conservan en
   `%LocalAppData%\AIVSP\settings.json`; no se persisten credenciales.
-- ✅ `dotnet format --verify-no-changes`, Release y las 136 pruebas están aprobados.
+- ✅ `dotnet format --verify-no-changes`, Release y las 165 pruebas están aprobados.
 - ✅ Auditoría de paquetes NuGet directos y transitivos sin vulnerabilidades conocidas
   en los orígenes consultados el 29 de julio de 2026.
 - ✅ Publicación autocontenida `win-x64` reproducible y validada fuera de `bin/obj`:
-  ZIP beta de aproximadamente 90 MB, versión de producto `0.2.0-beta.1` y versión de
-  archivo `0.2.0.1`.
+  versión de producto `0.2.0-beta.2` y versión de archivo `0.2.0.2`, generada de
+  nuevo el 23 de octubre de 2026. ZIP en `artifacts/publish/` (no versionado).
 - ✅ GitHub Actions valida formato, extensión, Release, pruebas no interactivas,
   publicación autocontenida y carga del ZIP en cada PR y al integrar en `main`.
 - ✅ Q14 (`12 + 8`) validada físicamente: `C) 20` en 186 ms sin solicitud HTTP a Ollama.

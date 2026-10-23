@@ -24,6 +24,7 @@ public class SystemTrayService : IHostedService, INotificationService, IDisposab
     private MenuItem? _pauseMenuItem;
     private MenuItem? _ocrModeMenuItem;
     private MenuItem? _geminiModeMenuItem;
+    private MenuItem? _antigravityModeMenuItem;
     private MenuItem? _vlmModeMenuItem;
     private MenuItem? _autoPasteMenuItem;
     private MenuItem? _visibleOverlayMenuItem;
@@ -96,6 +97,26 @@ public class SystemTrayService : IHostedService, INotificationService, IDisposab
                 ToolTip = "El flujo VLM todavía no genera coordenadas y límites de overlay confiables."
             };
 
+            _antigravityModeMenuItem = new MenuItem
+            {
+                Header = "Inferencia: Antigravity CLI (Gemini 3.8 Flash)",
+                IsCheckable = true,
+                IsChecked = _options.InferenceProvider == InferenceProvider.AntigravityCli,
+                ToolTip = "Requiere agy instalado y autenticado. Envía la pregunta al proveedor en la nube."
+            };
+            _antigravityModeMenuItem.Click += (s, e) =>
+            {
+                _options.UseVisionModel = false;
+                _options.InferenceProvider = InferenceProvider.AntigravityCli;
+                _ocrModeMenuItem.IsChecked = false;
+                _geminiModeMenuItem.IsChecked = false;
+                _antigravityModeMenuItem.IsChecked = true;
+                _vlmModeMenuItem.IsChecked = false;
+                _taskbarIcon.ToolTipText = ResolveReadyTooltip(_options);
+                _logger.LogInformation("Proveedor de inferencia cambiado a {InferenceProvider}.", _options.InferenceProvider);
+                SaveSettings();
+            };
+
             _ocrModeMenuItem.Click += (s, e) =>
             {
                 _options.UseVisionModel = false;
@@ -103,6 +124,7 @@ public class SystemTrayService : IHostedService, INotificationService, IDisposab
                 _options.ModelName = "qwen3:4b";
                 _ocrModeMenuItem.IsChecked = true;
                 _geminiModeMenuItem.IsChecked = false;
+                _antigravityModeMenuItem.IsChecked = false;
                 _vlmModeMenuItem.IsChecked = false;
                 _taskbarIcon.ToolTipText = ResolveReadyTooltip(_options);
                 _taskbarIcon.ShowBalloonTip(
@@ -118,6 +140,7 @@ public class SystemTrayService : IHostedService, INotificationService, IDisposab
                 _options.InferenceProvider = InferenceProvider.GeminiCli;
                 _ocrModeMenuItem.IsChecked = false;
                 _geminiModeMenuItem.IsChecked = true;
+                _antigravityModeMenuItem.IsChecked = false;
                 _vlmModeMenuItem.IsChecked = false;
                 _taskbarIcon.ToolTipText = ResolveReadyTooltip(_options);
                 _taskbarIcon.ShowBalloonTip(
@@ -132,6 +155,7 @@ public class SystemTrayService : IHostedService, INotificationService, IDisposab
 
             contextMenu.Items.Add(_ocrModeMenuItem);
             contextMenu.Items.Add(_geminiModeMenuItem);
+            contextMenu.Items.Add(_antigravityModeMenuItem);
             contextMenu.Items.Add(_vlmModeMenuItem);
 
             contextMenu.Items.Add(new Separator());
@@ -428,9 +452,12 @@ public class SystemTrayService : IHostedService, INotificationService, IDisposab
     };
 
     private static string ResolveReadyTooltip(AssistantOptions options) =>
-        options.InferenceProvider == InferenceProvider.GeminiCli
-            ? "AIVSP - Listo (Gemini CLI)"
-            : "AIVSP - Listo (Ollama local)";
+        options.InferenceProvider switch
+        {
+            InferenceProvider.GeminiCli => "AIVSP - Listo (Gemini CLI)",
+            InferenceProvider.AntigravityCli => "AIVSP - Listo (Antigravity CLI)",
+            _ => "AIVSP - Listo (Ollama local)"
+        };
 
     private void SetOverlayProfile(OverlayProfile profile)
     {

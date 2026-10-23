@@ -118,6 +118,11 @@ public sealed class JsonAssistantSettingsStore : IAssistantSettingsStore
         {
             throw new InvalidDataException("Gemini CLI executable path cannot be empty.");
         }
+        if (string.IsNullOrWhiteSpace(settings.AntigravityCliExecutablePath) ||
+            string.IsNullOrWhiteSpace(settings.AntigravityModelName))
+        {
+            throw new InvalidDataException("Antigravity executable and model cannot be empty.");
+        }
         if (!string.IsNullOrWhiteSpace(settings.BrowserBridgeToken) &&
             (settings.BrowserBridgeToken.Length != 64 ||
                 !settings.BrowserBridgeToken.All(Uri.IsHexDigit)))
@@ -134,6 +139,8 @@ public sealed class JsonAssistantSettingsStore : IAssistantSettingsStore
         public string ModelName { get; set; } = "qwen3:4b";
         public string OllamaEndpoint { get; set; } = "http://127.0.0.1:11434";
         public string GeminiCliExecutablePath { get; set; } = "gemini.cmd";
+        public string AntigravityCliExecutablePath { get; set; } = "agy.exe";
+        public string AntigravityModelName { get; set; } = AssistantOptions.DefaultAntigravityModelName;
         public string GeminiModelName { get; set; } =
             AssistantOptions.DefaultGeminiModelName;
         public string OcrLanguage { get; set; } = "es-MX";
@@ -156,6 +163,8 @@ public sealed class JsonAssistantSettingsStore : IAssistantSettingsStore
             ModelName = options.ModelName,
             OllamaEndpoint = options.OllamaEndpoint,
             GeminiCliExecutablePath = options.GeminiCliExecutablePath,
+            AntigravityCliExecutablePath = options.AntigravityCliExecutablePath,
+            AntigravityModelName = options.AntigravityModelName,
             GeminiModelName = options.GeminiModelName,
             OcrLanguage = options.OcrLanguage,
             InferenceTimeoutSeconds = options.InferenceTimeoutSeconds,
@@ -180,6 +189,8 @@ public sealed class JsonAssistantSettingsStore : IAssistantSettingsStore
             options.ModelName = ModelName;
             options.OllamaEndpoint = OllamaEndpoint;
             options.GeminiCliExecutablePath = GeminiCliExecutablePath;
+            options.AntigravityCliExecutablePath = AntigravityCliExecutablePath;
+            options.AntigravityModelName = AntigravityModelName;
             options.GeminiModelName = string.IsNullOrWhiteSpace(GeminiModelName)
                 ? AssistantOptions.DefaultGeminiModelName
                 : GeminiModelName;

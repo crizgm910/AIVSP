@@ -6,12 +6,12 @@ o generar una respuesta de texto. El modo VLM permanece deshabilitado.
 
 ## Estado
 
-Versión actual: `v0.2.0-beta.1`.
+Versión actual: `v0.2.0-beta.2` (extensión `0.2.9`).
 
 - Compilación Release: 0 errores y 0 advertencias.
-- Pruebas automatizadas: 136 aprobadas.
+- Pruebas automatizadas: 165 aprobadas, más las regresiones JavaScript.
 - Proveedor predeterminado: Ollama local con `qwen3:4b`.
-- Proveedor opcional: Gemini CLI.
+- Proveedores opcionales: Antigravity CLI y Gemini CLI.
 - Perfiles visuales: `Visible` y `Subtle`.
 - Extensión Chrome DOM opcional para evitar OCR en páginas compatibles.
 - Configuración persistente en `%LocalAppData%\AIVSP\settings.json`.
@@ -27,6 +27,7 @@ y [`TASKS.md`](TASKS.md) para el backlog.
 - .NET SDK 8 o posterior para compilar.
 - Ollama y el modelo configurado para el proveedor local.
 - Gemini CLI instalado y autenticado para utilizar el proveedor opcional.
+- Antigravity CLI instalado y autenticado para seleccionar `AntigravityCli`.
 
 ## Compilar y probar
 
@@ -56,14 +57,14 @@ Genera una distribución autocontenida con:
 El resultado se guarda en:
 
 ```text
-artifacts\publish\AIVSP-v0.2.0-beta.1-win-x64\
-artifacts\publish\AIVSP-v0.2.0-beta.1-win-x64.zip
+artifacts\publish\AIVSP-v0.2.0-beta.2-win-x64\
+artifacts\publish\AIVSP-v0.2.0-beta.2-win-x64.zip
 ```
 
 Para usarlo en otro equipo Windows x64:
 
 1. Descomprime el ZIP completo.
-2. Instala y prepara Ollama o Gemini CLI, según el proveedor que usarás.
+2. Instala y prepara Ollama, Antigravity CLI o Gemini CLI, según el proveedor que usarás.
 3. Ejecuta `Aivsp.Presentation.Wpf.exe`.
 4. Confirma el icono de AIVSP en la bandeja.
 
@@ -78,6 +79,8 @@ procedencia del archivo al descargarlo o copiarlo desde otro equipo.
 - `Chrome (DOM · Ctrl+Shift+Y)`: activa el puente local para la extensión. Es
   independiente del modo de escritorio.
 - `Inferencia: Ollama local (Qwen3)`: ruta predeterminada.
+- `Inferencia: Antigravity CLI (Gemini 3.8 Flash)`: proveedor de nube con perfil
+  textual limitado y respuesta JSON estructurada.
 - `Inferencia: Gemini CLI (3.1 Flash Lite)`: ejecuta el CLI en modo no interactivo,
   deshabilita extensiones y herramientas, usa un perfil de sistema aislado y exige
   salida JSON.
@@ -132,6 +135,49 @@ abierta se autoaplica correctamente, no se crea una tarjeta flotante duplicada; 
 sugerencias que sí requieren revisión usan una presentación compacta.
 
 ## Gemini CLI
+
+### Nueva alternativa: Antigravity CLI
+
+En la bandeja elige `Inferencia: Antigravity CLI (Gemini 3.8 Flash)`. El cambio se
+guarda sin alterar el token de conexión de Chrome/Brave. Gemini CLI queda como
+opción anterior y Ollama sigue siendo el predeterminado de instalaciones nuevas.
+
+Comprueba en una terminal:
+
+```powershell
+agy --version
+agy models
+```
+
+Si no está autenticado, abre `agy` y completa el inicio de sesión oficial. AIVSP
+no instala el CLI ni gestiona sus credenciales. Se verificó `agy 1.4.6` con
+`gemini-3.8-flash-low`; los modelos dependen de la cuenta y pueden cambiar.
+
+Configura `AntigravityCliExecutablePath` (por defecto `agy.exe`) y
+`AntigravityModelName` en el archivo de ajustes si necesitas otra ruta o modelo.
+También se busca `%LocalAppData%\agy\bin\agy.exe`. No se admiten envoltorios `.cmd`
+para este proveedor.
+
+Por compatibilidad, los campos `GeminiInferenceTimeoutSeconds` (75 s),
+`BrowserGeminiInferenceTimeoutSeconds` (30 s) y
+`GeminiAutoPasteMaximumContextAgeSeconds` (85 s) se comparten con Antigravity.
+El CLI tiene además un límite de 70 s por proceso.
+
+La pregunta se envía a la nube y el propio CLI puede conservar historial local.
+El directorio de trabajo es temporal; el perfil solo ofrece `finish` y un hook
+deniega las demás herramientas. Esto no es un sandbox del sistema operativo ni
+modifica tus preferencias globales del CLI.
+
+Prueba real reproducible, con preguntas sintéticas y consumo de cuota:
+
+```powershell
+dotnet run --project tools/Aivsp.Antigravity.Smoke --configuration Release -- --live
+```
+
+No verifica pegado físico ni una tarea real de Teams. Consulta el
+[modo headless oficial](https://antigravity.google/docs/cli/headless/).
+
+### Proveedor anterior
 
 Comprueba primero el CLI:
 

@@ -147,9 +147,12 @@ public class BrowserDomAssistantServiceTests
         _inference.VerifyNoOtherCalls();
     }
 
-    [Fact]
-    public async Task AssistAsync_GeminiTimeout_UsesBrowserSpecificLimit()
+    [Theory]
+    [InlineData(InferenceProvider.GeminiCli)]
+    [InlineData(InferenceProvider.AntigravityCli)]
+    public async Task AssistAsync_CloudTimeout_UsesBrowserSpecificLimit(InferenceProvider provider)
     {
+        _options.InferenceProvider = provider;
         _options.GeminiInferenceTimeoutSeconds = 75;
         _options.BrowserGeminiInferenceTimeoutSeconds = 1;
         _inference.Setup(service => service.InferActionAsync(

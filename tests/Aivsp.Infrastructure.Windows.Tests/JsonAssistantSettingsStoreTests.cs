@@ -13,6 +13,39 @@ public class JsonAssistantSettingsStoreTests : IDisposable
         Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public void AntigravitySettings_RoundTripWithoutChangingBrowserToken()
+    {
+        var store = new JsonAssistantSettingsStore(Path.Combine(_directory, "settings.json"));
+        var options = new AssistantOptions
+        {
+            InferenceProvider = InferenceProvider.AntigravityCli,
+            AntigravityCliExecutablePath = "C:/tools/agy.exe",
+            AntigravityModelName = "gemini-test",
+            BrowserBridgeToken = new string('B', 64)
+        };
+        store.Save(options);
+        var loaded = new AssistantOptions();
+        store.LoadInto(loaded);
+        Assert.Equal(InferenceProvider.AntigravityCli, loaded.InferenceProvider);
+        Assert.Equal(options.AntigravityCliExecutablePath, loaded.AntigravityCliExecutablePath);
+        Assert.Equal(options.AntigravityModelName, loaded.AntigravityModelName);
+        Assert.Equal(options.BrowserBridgeToken, loaded.BrowserBridgeToken);
+    }
+
+    [Fact]
+    public void LegacySettings_KeepProviderAndAddAntigravityDefaults()
+    {
+        Directory.CreateDirectory(_directory);
+        var path = Path.Combine(_directory, "legacy.json");
+        File.WriteAllText(path, """{"InferenceProvider":1}""");
+        var loaded = new AssistantOptions();
+        new JsonAssistantSettingsStore(path).LoadInto(loaded);
+        Assert.Equal(InferenceProvider.GeminiCli, loaded.InferenceProvider);
+        Assert.Equal(AssistantOptions.DefaultAntigravityModelName, loaded.AntigravityModelName);
+        Assert.Equal("agy.exe", loaded.AntigravityCliExecutablePath);
+    }
+
+    [Fact]
     public void SaveAndLoad_RoundTripsSupportedSettings()
     {
         var path = Path.Combine(_directory, "settings.json");

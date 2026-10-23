@@ -1,0 +1,1 @@
+{"aivsp-text-safety":{"PreToolUse":[{"matcher":"*","hooks":[{"type":"command","command":"powershell.exe -NoProfile -NonInteractive -EncodedCommand __AIVSP_GATE_COMMAND__","timeout":5}]}]}}

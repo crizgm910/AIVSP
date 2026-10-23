@@ -7,13 +7,30 @@ con sufijo `alpha` o `beta` son preliminares y pueden contener defectos conocido
 
 ## [Sin publicar]
 
+Sin cambios adicionales.
+
+## [0.2.0-beta.2] - 2026-10-23
+
 - 2026-10-23: reconstruida extensión 0.2.9 desde la base recuperada de GitHub:
   selector en marcos, permisos opcionales Forms/Teams, cancelación coordinada,
   validación de resultados y descarte de respuestas tardías.
 - Corregida redeclaración global al reinyectar el script; regresiones para cinco
   activaciones, cambio de controlador, texto abierto y cierre.
 
-Sin cambios registrados después de la candidata beta.
+- Proveedor opcional Antigravity CLI (`agy.exe`), modelo inicial
+  `gemini-3.8-flash-low`, seleccionable y persistente desde la bandeja.
+- Entrada UTF-8 por stdin, `structured_output` con esquema JSON, cancelación del
+  árbol de procesos y directorio temporal diferente por solicitud.
+- Perfil textual con solo `finish`, barrera PreToolUse que deniega otras
+  herramientas y rechazo de resultados con llamadas no permitidas.
+- Se conservan Ollama y Gemini CLI, la configuración anterior y el token del
+  navegador. No hay cambio automático de proveedor ni fallback silencioso.
+- Se reutilizan los límites de tiempo de nube y las reglas textuales existentes;
+  no cambia el algoritmo de OCR ni el overlay.
+- 165 pruebas .NET y regresiones JavaScript aprobadas. Pruebas reales con
+  preguntas abiertas, opción múltiple y cancelación de Antigravity.
+- Pendientes: tarea real de Teams, dos monitores y autopegado físico con el nuevo
+  proveedor. No se garantiza ausencia de alucinaciones ni disponibilidad externa.
 
 ## [0.2.0-beta.1] - 2026-07-29
 

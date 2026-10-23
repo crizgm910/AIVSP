@@ -7,6 +7,7 @@ public class AssistantOptions
 {
     public const string DefaultGeminiModelName = "gemini-3.1-flash-lite";
     public const string DefaultGeminiCliAlias = "aivsp-fast";
+    public const string DefaultAntigravityModelName = "gemini-3.8-flash-low";
 
     public string ActivationHotkey { get; set; } = "Ctrl+Shift+F9";
     public int InferenceTimeoutSeconds { get; set; } = 30;
@@ -26,6 +27,8 @@ public class AssistantOptions
     public InferenceProvider InferenceProvider { get; set; } = InferenceProvider.Ollama;
     public string GeminiCliExecutablePath { get; set; } = "gemini.cmd";
     public string GeminiModelName { get; set; } = DefaultGeminiModelName;
+    public string AntigravityCliExecutablePath { get; set; } = "agy.exe";
+    public string AntigravityModelName { get; set; } = DefaultAntigravityModelName;
     public OverlayProfile OverlayProfile { get; set; } = OverlayProfile.Visible;
     public bool DesktopOcrEnabled { get; set; } = true;
     public bool BrowserIntegrationEnabled { get; set; }

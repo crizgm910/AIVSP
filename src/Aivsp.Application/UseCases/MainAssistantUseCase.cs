@@ -78,7 +78,7 @@ public class MainAssistantUseCase
             return;
         }
 
-        var inferenceTimeoutSeconds = _options.InferenceProvider == InferenceProvider.GeminiCli
+        var inferenceTimeoutSeconds = _options.InferenceProvider is InferenceProvider.GeminiCli or InferenceProvider.AntigravityCli
             ? _options.GeminiInferenceTimeoutSeconds
             : _options.InferenceTimeoutSeconds;
         var operationToken = cancellationToken;
@@ -196,7 +196,7 @@ public class MainAssistantUseCase
                 if (_options.AutoPasteEnabled)
                 {
                     var maximumContextAgeSeconds =
-                        _options.InferenceProvider == InferenceProvider.GeminiCli
+                        _options.InferenceProvider is InferenceProvider.GeminiCli or InferenceProvider.AntigravityCli
                             ? _options.GeminiAutoPasteMaximumContextAgeSeconds
                             : _options.AutoPasteMaximumContextAgeSeconds;
                     var validation = _autoPasteSecurityService.Validate(new AutoPasteRequest(

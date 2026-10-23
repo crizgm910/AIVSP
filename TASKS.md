@@ -2,6 +2,22 @@
 
 Estados: `Pendiente`, `En progreso`, `Bloqueada`, `Terminada`.
 
+## Plan de recuperación y migración — 2026-10-23
+
+1. [x] Recuperar `main` en `C:\proyectos\AIVSP-recuperado`, sin sobrescribir ajustes.
+2. [x] Reconstruir extensión 0.2.9: reinyección, marcos, cancelación y respuestas tardías.
+3. [x] Guardar la recuperación en un commit separado (`d7e372a`).
+4. [x] Verificar Antigravity real, su esquema JSON y límites de herramientas.
+5. [x] Integrar proveedor opcional sin cambiar OCR, overlay ni proveedores anteriores.
+6. [x] Probar configuración antigua, token conservado, estados fallidos, herramientas
+   denegadas, preguntas abiertas, opción múltiple y cancelación; 165 pruebas .NET.
+7. [x] Documentar configuración, pruebas reales y riesgos externos.
+8. [ ] Validar físicamente autopegado con Antigravity en Chrome/Brave.
+9. [ ] Validar extracción y aplicación en una tarea real de Teams.
+
+Los registros posteriores de beta.1 se conservan como historial; el estado de la
+recuperación y beta.2 es el de esta sección y `project_status.md`.
+
 ## Orden de trabajo
 
 | ID | Prioridad | Estado | Tarea |

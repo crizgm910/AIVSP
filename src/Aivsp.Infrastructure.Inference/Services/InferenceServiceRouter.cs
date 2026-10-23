@@ -11,13 +11,16 @@ public sealed class InferenceServiceRouter : IInferenceService
 {
     private readonly OllamaInferenceService _ollama;
     private readonly GeminiCliInferenceService _geminiCli;
+    private readonly AntigravityCliInferenceService? _antigravityCli;
 
     public InferenceServiceRouter(
         OllamaInferenceService ollama,
-        GeminiCliInferenceService geminiCli)
+        GeminiCliInferenceService geminiCli,
+        AntigravityCliInferenceService? antigravityCli = null)
     {
         _ollama = ollama ?? throw new ArgumentNullException(nameof(ollama));
         _geminiCli = geminiCli ?? throw new ArgumentNullException(nameof(geminiCli));
+        _antigravityCli = antigravityCli;
     }
 
     public Task<AssistanceOutput> InferActionAsync(
@@ -31,6 +34,9 @@ public sealed class InferenceServiceRouter : IInferenceService
                 _ollama.InferActionAsync(userPrompt, detection, options, cancellationToken),
             InferenceProvider.GeminiCli =>
                 _geminiCli.InferActionAsync(userPrompt, detection, options, cancellationToken),
+            InferenceProvider.AntigravityCli =>
+                (_antigravityCli ?? throw new InvalidOperationException("Antigravity provider is not registered."))
+                    .InferActionAsync(userPrompt, detection, options, cancellationToken),
             _ => throw new InvalidOperationException(
                 $"Unsupported inference provider: {options.InferenceProvider}.")
         };

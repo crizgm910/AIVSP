@@ -46,7 +46,7 @@ public sealed partial class BrowserDomAssistantService
         var stopwatch = Stopwatch.StartNew();
         var lines = BuildOcrLines(request);
         var detection = new AssistanceDetectionResult(request.Mode, lines, null!);
-        var timeoutSeconds = _options.InferenceProvider == InferenceProvider.GeminiCli
+        var timeoutSeconds = _options.InferenceProvider is InferenceProvider.GeminiCli or InferenceProvider.AntigravityCli
             ? _options.BrowserGeminiInferenceTimeoutSeconds
             : _options.InferenceTimeoutSeconds;
 

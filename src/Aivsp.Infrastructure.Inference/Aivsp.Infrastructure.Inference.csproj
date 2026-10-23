@@ -1,4 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <EmbeddedResource Include="Assets/antigravity/*" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Aivsp.Application\Aivsp.Application.csproj" />

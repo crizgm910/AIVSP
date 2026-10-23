@@ -109,6 +109,8 @@ public partial class App : System.Windows.Application
                     });
                     services.AddSingleton<IGeminiCliProcessRunner, GeminiCliProcessRunner>();
                     services.AddSingleton<GeminiCliInferenceService>();
+                    services.AddSingleton<IAntigravityCliProcessRunner, AntigravityCliProcessRunner>();
+                    services.AddSingleton<AntigravityCliInferenceService>();
                     services.AddSingleton<IInferenceService, InferenceServiceRouter>();
                     services.AddSingleton<BrowserDomAssistantService>();
 
@@ -143,6 +145,7 @@ public partial class App : System.Windows.Application
                     "GeminiInferenceTimeoutSeconds: {GeminiInferenceTimeoutSeconds}; " +
                     "BrowserGeminiInferenceTimeoutSeconds: {BrowserGeminiInferenceTimeoutSeconds}; " +
                     "GeminiModel: {GeminiModelName}; " +
+                    "AntigravityModel: {AntigravityModelName}; " +
                     "VLM enabled: {UseVisionModel}.",
                     options.InferenceProvider,
                     options.OverlayProfile,
@@ -153,6 +156,7 @@ public partial class App : System.Windows.Application
                     options.GeminiInferenceTimeoutSeconds,
                     options.BrowserGeminiInferenceTimeoutSeconds,
                     options.GeminiModelName,
+                    options.AntigravityModelName,
                     options.UseVisionModel);
             }
             catch (Exception ex)
