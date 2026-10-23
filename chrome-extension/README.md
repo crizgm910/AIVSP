@@ -1,5 +1,20 @@
 # AIVSP DOM Assistant
 
+## Diagnóstico de Teams (0.2.12)
+
+Durante el modo de prueba los avisos muestran texto legible (el modo normal
+mantiene sus indicadores). En Opciones → Diagnóstico de prueba → Actualizar
+diagnóstico aparecen las últimas 24 etapas, con fecha y conteos de tablas, filas y
+radios. No contiene preguntas, respuestas, direcciones de página ni tokens.
+
+`selection_started`: selector activado en un documento. `target_clicked`: recibió
+el clic. `extraction_failed`: no pudo construir el contexto (ver aviso visible).
+`matrix_missing`: detectó controles por la ruta normal, no una matriz semántica.
+`matrix_recognized`: matriz interpretada. `test_click_confirmed`: el radio indica
+selección; `test_click_not_confirmed`: se llamó al clic, pero no se confirmó cambio.
+Los documentos se registran individualmente, por lo que una activación puede
+producir varias entradas en páginas con iframes. La lista es local, no se envía a AIVSP.
+
 ## Matrices y escalas (0.2.10)
 
 ### Prueba opcional de marcado (0.2.11)
@@ -50,7 +65,7 @@ escritorio con `Ctrl+Shift+F9` continúa disponible como respaldo.
 
 ## Uso
 
-Versión actual: 0.2.11. Para Forms incrustado, abre las opciones, pulsa
+Versión actual: 0.2.12. Para Forms incrustado, abre las opciones, pulsa
 `Habilitar Forms y Teams`, acepta los permisos y actualiza la tarea. La activación se
 realiza por marco; una selección nueva descarta respuestas anteriores. Recargar el
 script ya no provoca redeclaración de constantes. Actualiza la página tras actualizar.

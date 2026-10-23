@@ -10,6 +10,7 @@ initialize();
 
 document.getElementById("save").addEventListener("click", save);
 document.getElementById("test").addEventListener("click", testConnection);
+document.getElementById("refresh-diagnostics").addEventListener("click", refreshDiagnostics);
 document.getElementById("enable-microsoft-frames").addEventListener("click", async () => {
   try {
     const granted = await chrome.permissions.request({
@@ -31,6 +32,15 @@ async function initialize() {
   tokenInput.value = settings.bridgeToken;
   applyAnswersInput.checked = settings.applyAnswers === true;
   matrixTestModeInput.checked = settings.matrixTestMode === true;
+  await refreshDiagnostics();
+}
+
+async function refreshDiagnostics() {
+  const settings = await chrome.storage.local.get({ matrixDiagnostics: [] });
+  const events = Array.isArray(settings.matrixDiagnostics) ? settings.matrixDiagnostics.slice(-24) : [];
+  document.getElementById("matrix-diagnostics").textContent = events.length
+    ? events.map(event => `${event.at} | ${event.stage} | tablas=${event.tables} filas=${event.rows} radios=${event.radios}`).join("\n")
+    : "Sin intentos registrados. Activa la prueba, guarda y vuelve a seleccionar la matriz.";
 }
 
 async function save() {

@@ -2,6 +2,15 @@
 
 Estados: `Pendiente`, `En progreso`, `Bloqueada`, `Terminada`.
 
+## Plan: diagnosticar matriz real de Teams — 2026-10-23
+
+- [x] Revisar grabación: prueba activada, conexión correcta, ningún radio marcado.
+- [x] Hacer visibles los errores del modo de prueba, sin cambiar el modo normal.
+- [x] Registrar etapas y conteos estructurales locales, nunca preguntas ni tokens.
+- [x] Mostrar últimos intentos en Opciones y verificar estado del radio tras clic.
+- [x] Probar regresiones; preparar extensión 0.2.12 para nueva ejecución.
+- [ ] Obtener el diagnóstico de un nuevo intento en Teams y adaptar el DOM si corresponde.
+
 ## Plan: modo de prueba de matrices — 2026-10-23
 
 - [x] Añadir opción desactivada por defecto y aviso de primera opción fija, sin IA.

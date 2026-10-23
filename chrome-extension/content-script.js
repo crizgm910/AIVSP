@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const AIVSP_CONTENT_SCRIPT_VERSION = "0.2.11";
+const AIVSP_CONTENT_SCRIPT_VERSION = "0.2.12";
 const previousAivspController = globalThis.__aivspDomAssistantController;
 if (previousAivspController?.version !== AIVSP_CONTENT_SCRIPT_VERSION) {
   previousAivspController?.dispose?.();
@@ -15,7 +15,8 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     cleanupSelection: null,
     activeContext: null,
     generation: 0,
-    statusElement: null
+    statusElement: null,
+    testDiagnostics: false
   };
 
   const onRuntimeMessage = (message) => {
@@ -32,9 +33,11 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     message = "AIVSP · clic en pregunta", matrixTestMode = false) {
     STATE.generation++;
     STATE.activeContext = null;
+    STATE.testDiagnostics = matrixTestMode === true;
     cancelSelection();
     clearPreviousResult();
     showStatus(matrixTestMode ? "PRUEBA: haz clic en una fila de matriz; se marcará su primera opción sin IA." : message, "selection", 0);
+    if (matrixTestMode) reportTest("selection_started");
     document.documentElement.classList.add("aivsp-selection-active");
 
     const onClick = async (event) => {
@@ -49,6 +52,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
         await processTarget(target, matrixTestMode);
       } catch (error) {
         if (generation !== STATE.generation) return;
+        if (matrixTestMode) reportTest("extraction_failed", target);
         showStatus(
           error instanceof Error ? error.message : "No se pudo leer esta pregunta.",
           "error",
@@ -75,9 +79,14 @@ if (!globalThis.__aivspDomAssistantInstalled) {
 
   async function processTarget(target, matrixTestMode = false) {
     const generation = STATE.generation;
+    if (matrixTestMode) reportTest("target_clicked", target);
     const context = extractContext(target);
     STATE.activeContext = context;
+    if (matrixTestMode && !context.isMatrix) {
+      reportTest("matrix_missing", target);
+    }
     if (matrixTestMode === true && context.isMatrix) {
+      reportTest("matrix_recognized", target);
       const radio = context.optionElements.get("A");
       if (!context.root.isConnected || !radio?.isConnected || !context.root.contains(radio) ||
           radio.disabled || radio.getAttribute("aria-disabled") === "true" ||
@@ -85,7 +94,13 @@ if (!globalThis.__aivspDomAssistantInstalled) {
         throw new Error("Prueba cancelada: la fila ya no está disponible.");
       }
       radio.click();
-      showStatus(`PRUEBA sin IA: clic en primera opción (${context.payload.options[0].text}). No es una respuesta evaluada.`, "warning", 6500);
+      // A dispatched click alone is not evidence that a controlled Forms radio changed.
+      const selected = radio.checked === true || radio.getAttribute("aria-checked") === "true";
+      reportTest(selected ? "test_click_confirmed" : "test_click_not_confirmed", target);
+      showStatus(selected
+        ? `PRUEBA sin IA: primera opción marcada (${context.payload.options[0].text}). No es una respuesta evaluada.`
+        : "PRUEBA: matriz reconocida, pero el clic no confirmó la selección. Abre Opciones → Diagnóstico de prueba.",
+        selected ? "warning" : "error", 10000);
       return;
     }
     if (context.requiresEvidence) {
@@ -102,6 +117,17 @@ if (!globalThis.__aivspDomAssistantInstalled) {
 
   function cancelSelection() {
     STATE.cleanupSelection?.();
+  }
+
+  function reportTest(stage, target) {
+    // Only structural counts: no page URL, question, labels, answers, or token.
+    let root = target;
+    for (let depth = 0; root?.parentElement && root.parentElement !== document.body && depth < 4; depth++) root = root.parentElement;
+    const count = selector => Math.min(root?.querySelectorAll?.(selector).length || 0, 999);
+    chrome.runtime.sendMessage({ type: "AIVSP_TEST_DIAGNOSTIC", payload: {
+      stage, tables: count('table, [role="table"], [role="grid"]'),
+      rows: count('tr, [role="row"]'), radios: count('input[type="radio"], [role="radio"]')
+    } }).catch(() => {});
   }
 
   function extractContext(target) {
@@ -456,6 +482,10 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     element.id = "aivsp-dom-status";
     element.className = `aivsp-status-${kind}`;
     element.textContent = statusGlyph(kind);
+    if (STATE.testDiagnostics) {
+      element.textContent = message;
+      element.setAttribute("data-aivsp-diagnostic", "true");
+    }
     element.title = message;
     element.setAttribute("aria-label", message);
     element.setAttribute("role", kind === "error" ? "alert" : "status");
@@ -569,6 +599,14 @@ if (!globalThis.__aivspDomAssistantInstalled) {
         white-space: nowrap !important;
         text-overflow: ellipsis !important;
         opacity: .58 !important;
+      }
+    `;
+    style.textContent += `
+      #aivsp-dom-status[data-aivsp-diagnostic="true"] {
+        width: auto !important; max-width: min(640px, 85vw) !important;
+        height: auto !important; padding: 10px 14px !important;
+        font: 600 14px/1.4 system-ui, sans-serif !important;
+        border-radius: 8px !important; white-space: normal !important;
       }
     `;
     document.documentElement.appendChild(style);

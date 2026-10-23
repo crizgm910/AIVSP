@@ -9,6 +9,7 @@ const sentMessages = [];
 const badges = [];
 let frames = [{ frameId: 0 }], blocked = [];
 let matrixTestMode = false;
+let matrixDiagnostics = [];
 
 globalThis.setTimeout = (callback) => {
   callback();
@@ -54,9 +55,10 @@ globalThis.chrome = {
       async get(defaults) {
         return {
           ...defaults,
-          bridgeToken: "A".repeat(64), matrixTestMode
+          bridgeToken: "A".repeat(64), matrixTestMode, matrixDiagnostics
         };
-      }
+      },
+      async set(value) { if (value.matrixDiagnostics) matrixDiagnostics = value.matrixDiagnostics; }
     }
   },
   tabs: {
@@ -128,6 +130,14 @@ assert.equal(sentMessages.at(-1).message.matrixTestMode, true);
 matrixTestMode = "true";
 await commandListener("select-question");
 assert.equal(sentMessages.at(-1).message.matrixTestMode, false);
+
+for (let i = 0; i < 30; i++) {
+  await new Promise(resolve => runtimeListener({ type: "AIVSP_TEST_DIAGNOSTIC",
+    payload: { stage: "matrix_recognized", tables: 1, rows: 2, radios: 4, question: "must not persist", token: "secret" }
+  }, { tab: { id: 31 } }, resolve));
+}
+assert.equal(matrixDiagnostics.length, 24);
+assert.deepEqual(Object.keys(matrixDiagnostics[0]).sort(), ["at", "radios", "rows", "stage", "tables"]);
 
 console.log(
   "Service worker validado: comando explícito e icono comparten la selección.");

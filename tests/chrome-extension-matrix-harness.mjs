@@ -7,7 +7,7 @@ class Element {
   append(...children) { for (const child of children) { child.parentElement = this; this.children.push(child); } return this; }
   getAttribute(name) { return this.attributes[name] ?? null; }
   setAttribute(name, value) { this.attributes[name] = value; }
-  click() { this.clickCount = (this.clickCount || 0) + 1; }
+  click() { this.clickCount = (this.clickCount || 0) + 1; if (!this.ignoreClick) this.checked = true; }
   getBoundingClientRect() { return { width: 100, height: 30 }; }
   matches(selector) { return selector.split(",").some(part => {
     part = part.trim();
@@ -22,13 +22,17 @@ class Element {
   contains(element) { return element === this || this.children.some(child => child.contains(element)); }
 }
 const body = new Element("body");
-const elements = new Map(), requests = [];
+const elements = new Map(), requests = [], diagnostics = [];
 const context = vm.createContext({ Element, HTMLInputElement: class extends Element {},
   document: { body, getElementById: id => elements.get(id),
     createElement() { return { setAttribute() {}, remove() { elements.delete(this.id); } }; },
     documentElement: { appendChild(element) { elements.set(element.id, element); } } },
   location: { origin: "https://forms.office.com", pathname: "/response" }, setTimeout() {},
-  chrome: { runtime: { onMessage: { addListener() {} }, async sendMessage(message) { requests.push(message); return { ok: false }; } } },
+  chrome: { runtime: { onMessage: { addListener() {} }, async sendMessage(message) {
+    if (message.type === "AIVSP_TEST_DIAGNOSTIC") diagnostics.push(message.payload);
+    else requests.push(message);
+    return { ok: false };
+  } } },
   getComputedStyle: () => ({ display: "block", visibility: "visible", opacity: 1 }) });
 const source = readFileSync(new URL("../chrome-extension/content-script.js", import.meta.url), "utf8");
 // Expose the real extractor only inside the test VM; production has no test API.
@@ -70,6 +74,10 @@ assert.equal(requests.length, 0, "Test mode must not query AI");
 assert.equal(rating.rows[0].children[1].children[0].clickCount, 1);
 assert.equal(rating.rows[0].children[2].children[0].clickCount, undefined);
 assert.match(elements.get("aivsp-dom-status").title, /PRUEBA sin IA/);
+assert.equal(diagnostics.at(-1).stage, "test_click_confirmed");
+const ignored = fixture(); ignored.rows[0].children[1].children[0].ignoreClick = true;
+await context.testProcess(ignored.rows[0], true);
+assert.equal(diagnostics.at(-1).stage, "test_click_not_confirmed");
 const testRows = fixture();
 await context.testProcess(testRows.rows[1], true);
 assert.equal(testRows.rows[1].children[1].children[0].clickCount, 1);

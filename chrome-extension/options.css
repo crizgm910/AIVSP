@@ -58,6 +58,8 @@ input[type="password"] {
   margin-top: 24px;
 }
 
+#matrix-diagnostics { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+
 button {
   padding: 10px 16px;
   border: 1px solid #0369a1;

@@ -2,6 +2,7 @@
 
 const BRIDGE_URL = "http://127.0.0.1:18791";
 const REQUEST_TIMEOUT_MS = 40000;
+let diagnosticWrites = Promise.resolve();
 
 chrome.action.onClicked.addListener(async (tab) => {
   await armSelection(tab);
@@ -60,6 +61,21 @@ async function armSelection(tab) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "AIVSP_TEST_DIAGNOSTIC" && sender.tab?.id) {
+    diagnosticWrites = diagnosticWrites.catch(() => {}).then(async () => {
+      const allowed = ["selection_started", "target_clicked", "extraction_failed", "matrix_missing",
+        "matrix_recognized", "test_click_confirmed", "test_click_not_confirmed"];
+      if (!allowed.includes(message.payload?.stage)) return;
+      const bounded = value => Number.isInteger(value) && value >= 0 ? Math.min(value, 999) : 0;
+      const stored = await chrome.storage.local.get({ matrixDiagnostics: [] });
+      const events = Array.isArray(stored.matrixDiagnostics) ? stored.matrixDiagnostics.slice(-23) : [];
+      events.push({ at: new Date().toISOString(), stage: message.payload.stage,
+        tables: bounded(message.payload.tables), rows: bounded(message.payload.rows), radios: bounded(message.payload.radios) });
+      await chrome.storage.local.set({ matrixDiagnostics: events });
+    });
+    diagnosticWrites.then(() => sendResponse({ ok: true }), () => sendResponse({ ok: false }));
+    return true;
+  }
   if (message?.type === "AIVSP_SELECTION_FINISHED" && sender.tab?.id) {
     chrome.tabs.sendMessage(sender.tab.id, { type: "AIVSP_CANCEL_SELECTION" }).catch(() => {});
     return false;

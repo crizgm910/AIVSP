@@ -47,8 +47,8 @@ if (-not $selectionCommand -or
 if ($manifest.commands.'_execute_action') {
     throw 'El atajo ambiguo _execute_action no debe estar presente.'
 }
-if ($manifest.version -ne '0.2.11') {
-    throw 'La versión esperada de la extensión es 0.2.11.'
+if ($manifest.version -ne '0.2.12') {
+    throw 'La versión esperada de la extensión es 0.2.12.'
 }
 $expectedOptionalHosts = @('https://forms.cloud.microsoft/*', 'https://forms.office.com/*',
     'https://teams.microsoft.com/*', 'https://teams.cloud.microsoft/*')
@@ -111,7 +111,7 @@ $requiredSubtlePatterns = @(
     'result.confidence >= 0.75',
     '"AIVSP · revisa"',
     'if (!mayApply)',
-    'AIVSP_CONTENT_SCRIPT_VERSION = "0.2.11"',
+    'AIVSP_CONTENT_SCRIPT_VERSION = "0.2.12"',
     '__aivspDomAssistantController'
 )
 foreach ($pattern in $requiredSubtlePatterns) {

@@ -7,6 +7,11 @@ con sufijo `alpha` o `beta` son preliminares y pueden contener defectos conocido
 
 ## [Sin publicar]
 
+- Extensión `0.2.12`: avisos de texto visibles exclusivamente durante el modo de
+  prueba, diagnóstico local de las últimas 24 etapas (sin URL, preguntas ni tokens)
+  y verificación de `checked`/`aria-checked` tras el clic. Un clic sin selección
+  confirmada ya no se presenta como marcado correcto. La causa del fallo en Teams
+  sigue pendiente del diagnóstico real; no se declara resuelta.
 - Extensión `0.2.11`: modo de prueba de matrices, apagado por defecto. Al activarlo
   explícitamente en Opciones, hace clic en la primera opción de la fila elegida,
   sin consultar IA ni enviar el formulario. No representa una calificación correcta.
