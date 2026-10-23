@@ -7,7 +7,15 @@ con sufijo `alpha` o `beta` son preliminares y pueden contener defectos conocido
 
 ## [Sin publicar]
 
-Sin cambios adicionales.
+- Extensión `0.2.10`: reconocimiento de matrices HTML/ARIA, opciones por columna
+  y consulta de una fila por activación. Una selección ambigua pide elegir fila.
+- Rúbricas con valoraciones como Excelente/Bueno/Regular/Deficiente: reconocimiento
+  con aviso; no se consulta la IA ni se inventa una calificación sin revisar el trabajo.
+- Rechazo seguro de encabezados incompletos o repetidos, celdas combinadas y filas
+  deshabilitadas. Fixture local y tercer harness de regresión para matrices.
+- Prueba física con el DOM real de Teams pendiente; la captura no permite verificar
+  su estructura. Los formularios basados en divs sin roles semánticos no se admiten
+  aún como matrices.
 
 ## [0.2.0-beta.2] - 2026-10-23
 

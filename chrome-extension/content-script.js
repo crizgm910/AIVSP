@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const AIVSP_CONTENT_SCRIPT_VERSION = "0.2.9";
+const AIVSP_CONTENT_SCRIPT_VERSION = "0.2.10";
 const previousAivspController = globalThis.__aivspDomAssistantController;
 if (previousAivspController?.version !== AIVSP_CONTENT_SCRIPT_VERSION) {
   previousAivspController?.dispose?.();
@@ -77,6 +77,10 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     const generation = STATE.generation;
     const context = extractContext(target);
     STATE.activeContext = context;
+    if (context.requiresEvidence) {
+      showStatus("Matriz reconocida. Esta valoración requiere revisar el trabajo; no se seleccionará una calificación automáticamente.", "warning", 6500);
+      return;
+    }
     showStatus("AIVSP · procesando", "processing", 0);
     const response = await chrome.runtime.sendMessage({
       type: "AIVSP_ASSIST_REQUEST",
@@ -94,22 +98,23 @@ if (!globalThis.__aivspDomAssistantInstalled) {
       throw new Error("No se encontró el elemento seleccionado.");
     }
 
-    const root = findBestRoot(target);
+    const matrix = extractMatrix(target);
+    const root = matrix?.root || findBestRoot(target);
     if (!root) {
       throw new Error("No se reconoció un contenedor de pregunta.");
     }
 
-    const radios = usableRadios(root).slice(0, 12);
-    const input = findAnswerInput(root, target);
-    const options = radios.length >= 2
+    const radios = matrix?.radios || usableRadios(root).slice(0, 12);
+    const input = matrix ? null : findAnswerInput(root, target);
+    const options = matrix?.options || (radios.length >= 2
       ? radios.map((radio, index) => extractOption(root, radio, index))
-      : [];
+      : []);
     const mode = options.length >= 2 ? 1 : input ? 2 : 0;
     if (mode === 0) {
       throw new Error("La selección no contiene opciones ni un campo de respuesta.");
     }
 
-    const question = extractQuestion(root, options, input);
+    const question = matrix?.question || extractQuestion(root, options, input);
     if (!question) {
       throw new Error("No se encontró el enunciado de la pregunta.");
     }
@@ -119,6 +124,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     return {
       root,
       input,
+      requiresEvidence: matrix?.requiresEvidence === true,
       optionElements: new Map(options.map((option, index) => [
         option.key.toUpperCase(),
         radios[index]
@@ -179,6 +185,70 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     candidates.sort((left, right) =>
       right.score - left.score || left.textLength - right.textLength);
     return candidates[0]?.element || null;
+  }
+
+  // Standard HTML/ARIA matrices only. Never flatten radios from different rows.
+  function extractMatrix(target) {
+    const tableSelector = 'table, [role="table"], [role="grid"]';
+    let table = target.closest?.(tableSelector);
+    if (!table) {
+      for (let parent = target, depth = 0;
+        parent && parent !== document.body && depth < 5;
+        parent = parent.parentElement, depth++) {
+        const tables = visibleElements(parent.querySelectorAll(tableSelector));
+        if (tables.length === 1) { table = tables[0]; break; }
+        if (tables.length > 1) break;
+      }
+    }
+    if (!table) return null;
+    const rowSelector = 'tr, [role="row"]';
+    const cellSelector = 'th, td, [role="cell"], [role="gridcell"], [role="rowheader"], [role="columnheader"]';
+    const rows = visibleElements(table.querySelectorAll(rowSelector))
+      .filter(row => row.closest(tableSelector) === table);
+    const answerRows = rows.filter(row => usableRadios(row).length >= 2);
+    if (!answerRows.length) return null;
+    const clickedRow = target.closest?.(rowSelector);
+    const row = answerRows.includes(clickedRow) ? clickedRow : answerRows.length === 1 ? answerRows[0] : null;
+    if (!row) throw new Error("Matriz reconocida: haz clic en la fila que quieres consultar.");
+    const radios = usableRadios(row);
+    if (radios.some(radio => radio.disabled || radio.getAttribute("aria-disabled") === "true")) {
+      throw new Error("La fila de matriz contiene opciones deshabilitadas.");
+    }
+    if (radios.length > 12) throw new Error("La fila de matriz tiene demasiadas opciones.");
+    const cells = Array.from(row.querySelectorAll(cellSelector));
+    const headerRow = rows.find(candidate => !usableRadios(candidate).length &&
+      candidate.querySelectorAll(cellSelector).length >= radios.length);
+    const headerCells = headerRow ? Array.from(headerRow.querySelectorAll(cellSelector)) : [];
+    if (cells.length !== radios.length + 1 ||
+        headerCells.length !== radios.length + 1 ||
+        [...cells, ...headerCells].some(cell => Number(cell.getAttribute("colspan") || cell.getAttribute("aria-colspan") || 1) !== 1 ||
+          Number(cell.getAttribute("rowspan") || cell.getAttribute("aria-rowspan") || 1) !== 1)) {
+      throw new Error("Matriz reconocida, pero no se pudieron asociar sus filas y columnas con seguridad.");
+    }
+    const headers = headerCells.slice(-radios.length).map(cell => normalizedText(cell.innerText));
+    const rowLabel = normalizedText(cells[0].innerText);
+    if (!rowLabel || headers.some(text => !text) || new Set(headers).size !== headers.length ||
+        cells.slice(1).some((cell, index) => {
+          const contained = usableRadios(cell);
+          return contained.length !== 1 || contained[0] !== radios[index];
+        })) {
+      throw new Error("Matriz reconocida, pero faltan etiquetas inequívocas de fila o columna.");
+    }
+    const options = headers.map((text, index) => ({ key: String.fromCharCode(65 + index), text }));
+    let root = table;
+    let title = normalizedText(table.getAttribute("aria-label") || table.querySelector("caption")?.innerText);
+    for (let parent = table.parentElement, depth = 0;
+      parent && parent !== document.body && depth < 4;
+      parent = parent.parentElement, depth++) {
+      const heading = Array.from(parent.querySelectorAll('.question, [data-question], legend, [role="heading"], h1, h2, h3, h4'))
+        .find(element => !table.contains(element) && isVisible(element));
+      if (heading) { root = parent; title = normalizedText(heading.innerText); break; }
+    }
+    return {
+      root, radios, options,
+      question: `${title || "Matriz de opciones"}. Fila: ${rowLabel}`,
+      requiresEvidence: headers.some(text => /^(excelente|bueno|regular|deficiente|muy bueno|muy malo|de acuerdo|en desacuerdo|satisfecho|insatisfecho)$/i.test(text))
+    };
   }
 
   function extractOption(root, radio, index) {

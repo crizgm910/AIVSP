@@ -30,7 +30,7 @@ const send = type => { for (const f of listeners) f({ type }); };
 inject(); const initial = context.__aivspDomAssistantController;
 for (let i = 0; i < 5; i++) { inject(); send("AIVSP_BEGIN_SELECTION"); assert.equal(listeners.size, 1); assert.equal(context.__aivspDomAssistantController, initial); assert.ok(classes.has("aivsp-selection-active")); }
 inject('const AIVSP_CONTENT_SCRIPT_VERSION = "0.2.8"; const previousAivspController = null;'); inject();
-inject(source.replace('VERSION = "0.2.9"', 'VERSION = "test-upgrade"'));
+inject(source.replace('VERSION = "0.2.10"', 'VERSION = "test-upgrade"'));
 assert.equal(listeners.size, 1); assert.notEqual(context.__aivspDomAssistantController, initial);
 send("AIVSP_BEGIN_SELECTION"); events.get("keydown")({ key: "Escape" }); assert.equal(events.has("click"), false);
 send("AIVSP_BEGIN_SELECTION"); send("AIVSP_CANCEL_SELECTION"); assert.equal(classes.size, 0);

@@ -1,6 +1,17 @@
 # Estado del proyecto: AIVSP
 
-**Versión actual: `v0.2.0-beta.2`; extensión `0.2.9`.**
+**Versión actual: `v0.2.0-beta.2`; extensión en código `0.2.10`.**
+
+Actualización de extensión: soporte inicial de matrices HTML/ARIA con separación
+por fila, encabezados verificados y aviso para rúbricas sin evidencia. Pruebas JS
+de matrices y 165 pruebas .NET aprobadas. Falta probar la matriz real de Teams.
+El ZIP completo beta.2 generado antes de este cambio contiene extensión 0.2.9;
+para matrices usar `chrome-extension/` actual o el ZIP de extensión 0.2.10.
+
+Validación física posterior de Antigravity: tres preguntas de opción múltiple y
+tres abiertas completadas en logs; el usuario confirmó autopegado en el campo
+correcto para las abiertas. Esta validación no implica que la matriz de Teams
+ya haya sido probada.
 
 Última revisión técnica: 23 de octubre de 2026.
 
@@ -15,8 +26,8 @@ navegador. Se selecciona desde la bandeja.
 Validación de esta recuperación: 165 pruebas .NET y regresiones de extensión
 aprobadas. El adaptador real resolvió preguntas abiertas y opción múltiple en
 6.7–9.8 s en la última ronda y pasó cancelación. El hook bloqueó una lectura de
-archivo antes de ejecutarla. El autopegado físico con el nuevo proveedor todavía
-requiere confirmación; los tiempos medidos no son garantía.
+archivo antes de ejecutarla. El autopegado físico de abiertas ya fue confirmado
+posteriormente por el usuario; los tiempos medidos no son garantía.
 
 Esta es la segunda candidata beta del MVP avanzado: el flujo principal, sus protecciones
 y su empaquetado cuentan con validación automatizada y pruebas físicas en un monitor.

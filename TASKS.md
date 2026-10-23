@@ -2,6 +2,19 @@
 
 Estados: `Pendiente`, `En progreso`, `Bloqueada`, `Terminada`.
 
+## Plan: preguntas matriz/Likert en extensión — 2026-10-23
+
+- [x] Reconocer tablas HTML y matrices ARIA, asociando fila y columnas.
+- [x] Procesar una sola fila por activación; pedir fila si el clic es ambiguo.
+- [x] No inventar valoraciones de rúbricas subjetivas sin evidencia del trabajo.
+- [x] Probar extracción, encabezados, aislamiento de filas y regresiones existentes.
+- [x] Añadir formulario local de prueba; documentar límites y validar Release/tests.
+- [ ] Confirmar reconocimiento con la representación real de Forms/Teams.
+
+La captura de Teams muestra una escala de valoración, no una pregunta con una
+respuesta objetivamente correcta. La compatibilidad con el DOM real de Teams
+seguirá pendiente hasta ejecutar una prueba allí.
+
 ## Plan de recuperación y migración — 2026-10-23
 
 1. [x] Recuperar `main` en `C:\proyectos\AIVSP-recuperado`, sin sobrescribir ajustes.

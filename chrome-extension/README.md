@@ -1,5 +1,26 @@
 # AIVSP DOM Assistant
 
+## Matrices y escalas (0.2.10)
+
+Reconoce tablas HTML y matrices con roles ARIA `table`/`grid`, filas, celdas y
+encabezados. Consulta una fila por activación: pulsa su texto o uno de sus radios.
+Si solo hay una fila, puedes pulsar el enunciado; con varias, debes elegir fila.
+No se combinan respuestas de filas distintas. Se exigen encabezados completos y
+sin celdas combinadas. Los diseños sin semántica de tabla todavía necesitan
+validación/adaptación con el DOM real.
+
+En escalas de valoración como Excelente/Bueno/Regular/Deficiente, reconoce la
+matriz pero muestra una advertencia y no solicita ni selecciona una nota inventada.
+Es necesario revisar el trabajo para evaluarlo; la captura sola no basta.
+
+Fixture local: `tests/fixtures/matrix-questions.html`. Para páginas `file://`, el
+usuario debe autorizar acceso a archivos en los detalles de la extensión; también
+puede servir la fixture desde un servidor local. No es necesario cambiar permisos
+para probar directamente un formulario de Teams permitido.
+
+Prueba real de Teams: pendiente. Recarga esta misma extensión en
+`chrome://extensions` y después recarga el formulario. Conserva el atajo existente.
+
 Extensión opcional de Chrome para leer directamente el texto de una pregunta visible.
 Evita OCR y coordenadas cuando el cuestionario está en el navegador; el flujo de
 escritorio con `Ctrl+Shift+F9` continúa disponible como respaldo.
@@ -18,7 +39,7 @@ escritorio con `Ctrl+Shift+F9` continúa disponible como respaldo.
 
 ## Uso
 
-Versión reconstruida: 0.2.9. Para Forms incrustado, abre las opciones, pulsa
+Versión actual: 0.2.10. Para Forms incrustado, abre las opciones, pulsa
 `Habilitar Forms y Teams`, acepta los permisos y actualiza la tarea. La activación se
 realiza por marco; una selección nueva descarta respuestas anteriores. Recargar el
 script ya no provoca redeclaración de constantes. Actualiza la página tras actualizar.
