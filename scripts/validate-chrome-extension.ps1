@@ -26,7 +26,7 @@ if ($manifest.manifest_version -ne 3) {
     throw 'La extensión debe usar Manifest V3.'
 }
 
-$expectedPermissions = @('activeTab', 'scripting', 'storage')
+$expectedPermissions = @('activeTab', 'scripting', 'storage', 'webNavigation')
 $actualPermissions = @($manifest.permissions | Sort-Object)
 $sortedExpectedPermissions = @($expectedPermissions | Sort-Object)
 if (Compare-Object $actualPermissions $sortedExpectedPermissions) {
@@ -47,8 +47,13 @@ if (-not $selectionCommand -or
 if ($manifest.commands.'_execute_action') {
     throw 'El atajo ambiguo _execute_action no debe estar presente.'
 }
-if ($manifest.version -ne '0.2.6') {
-    throw 'La versión esperada de la extensión discreta es 0.2.6.'
+if ($manifest.version -ne '0.2.9') {
+    throw 'La versión esperada de la extensión es 0.2.9.'
+}
+$expectedOptionalHosts = @('https://forms.cloud.microsoft/*', 'https://forms.office.com/*',
+    'https://teams.microsoft.com/*', 'https://teams.cloud.microsoft/*')
+if (Compare-Object @($manifest.optional_host_permissions | Sort-Object) @($expectedOptionalHosts | Sort-Object)) {
+    throw 'Los permisos opcionales deben limitarse a Forms y Teams.'
 }
 
 $node = Get-Command node -ErrorAction SilentlyContinue
@@ -71,13 +76,14 @@ if ($LASTEXITCODE -ne 0) {
 
 $source = Get-ChildItem -LiteralPath $extension -File |
     Get-Content -Raw
+& $node.Source (Join-Path $root 'tests\chrome-extension-frame-selection-harness.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Falló la regresión del selector.' }
 $forbiddenPatterns = @(
     '<all_urls>',
     'externally_connectable',
     'eval(',
     'new Function',
-    'http://localhost',
-    'https://'
+    'http://localhost'
 )
 foreach ($pattern in $forbiddenPatterns) {
     if ($source -match [regex]::Escape($pattern)) {
@@ -101,7 +107,7 @@ $requiredSubtlePatterns = @(
     'result.confidence >= 0.75',
     '"AIVSP · revisa"',
     'if (!mayApply)',
-    'AIVSP_CONTENT_SCRIPT_VERSION = "0.2.6"',
+    'AIVSP_CONTENT_SCRIPT_VERSION = "0.2.9"',
     '__aivspDomAssistantController'
 )
 foreach ($pattern in $requiredSubtlePatterns) {

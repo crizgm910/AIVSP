@@ -7,6 +7,12 @@ con sufijo `alpha` o `beta` son preliminares y pueden contener defectos conocido
 
 ## [Sin publicar]
 
+- 2026-10-23: reconstruida extensión 0.2.9 desde la base recuperada de GitHub:
+  selector en marcos, permisos opcionales Forms/Teams, cancelación coordinada,
+  validación de resultados y descarte de respuestas tardías.
+- Corregida redeclaración global al reinyectar el script; regresiones para cinco
+  activaciones, cambio de controlador, texto abierto y cierre.
+
 Sin cambios registrados después de la candidata beta.
 
 ## [0.2.0-beta.1] - 2026-07-29

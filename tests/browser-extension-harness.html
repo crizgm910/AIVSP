@@ -29,6 +29,7 @@
           }
         },
         async sendMessage(message) {
+          if (message.type === "AIVSP_SELECTION_FINISHED") return;
           document.body.dataset.lastPayload = JSON.stringify(message.payload);
           if (message.payload.question.includes("baja confianza")) {
             return {

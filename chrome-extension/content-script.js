@@ -1,6 +1,7 @@
+(() => {
 "use strict";
 
-const AIVSP_CONTENT_SCRIPT_VERSION = "0.2.6";
+const AIVSP_CONTENT_SCRIPT_VERSION = "0.2.9";
 const previousAivspController = globalThis.__aivspDomAssistantController;
 if (previousAivspController?.version !== AIVSP_CONTENT_SCRIPT_VERSION) {
   previousAivspController?.dispose?.();
@@ -13,32 +14,41 @@ if (!globalThis.__aivspDomAssistantInstalled) {
   const STATE = {
     cleanupSelection: null,
     activeContext: null,
+    generation: 0,
     statusElement: null
   };
 
   const onRuntimeMessage = (message) => {
     if (message?.type === "AIVSP_BEGIN_SELECTION") {
       beginSelection();
+    } else if (message?.type === "AIVSP_CANCEL_SELECTION" && STATE.cleanupSelection) {
+      cancelSelection();
+      STATE.statusElement?.remove();
     }
   };
   chrome.runtime.onMessage.addListener(onRuntimeMessage);
 
   function beginSelection(
     message = "AIVSP · clic en pregunta") {
+    STATE.generation++;
+    STATE.activeContext = null;
     cancelSelection();
     clearPreviousResult();
     showStatus(message, "selection", 0);
     document.documentElement.classList.add("aivsp-selection-active");
 
     const onClick = async (event) => {
+      const generation = STATE.generation;
       event.preventDefault();
       event.stopImmediatePropagation();
       const target = event.target instanceof Element ? event.target : null;
       cancelSelection();
+      chrome.runtime.sendMessage({ type: "AIVSP_SELECTION_FINISHED" }).catch(() => {});
 
       try {
         await processTarget(target);
       } catch (error) {
+        if (generation !== STATE.generation) return;
         showStatus(
           error instanceof Error ? error.message : "No se pudo leer esta pregunta.",
           "error",
@@ -48,6 +58,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     const onKeyDown = (event) => {
       if (event.key === "Escape") {
         cancelSelection();
+        chrome.runtime.sendMessage({ type: "AIVSP_SELECTION_FINISHED" }).catch(() => {});
         showStatus("Selección cancelada.", "info", 1800);
       }
     };
@@ -63,6 +74,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
   }
 
   async function processTarget(target) {
+    const generation = STATE.generation;
     const context = extractContext(target);
     STATE.activeContext = context;
     showStatus("AIVSP · procesando", "processing", 0);
@@ -70,7 +82,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
       type: "AIVSP_ASSIST_REQUEST",
       payload: context.payload
     });
-    applyResponse(response, context);
+    if (generation === STATE.generation) applyResponse(response, context);
   }
 
   function cancelSelection() {
@@ -565,6 +577,8 @@ if (!globalThis.__aivspDomAssistantInstalled) {
   globalThis.__aivspDomAssistantController = {
     version: AIVSP_CONTENT_SCRIPT_VERSION,
     dispose() {
+      STATE.generation++;
+      STATE.activeContext = null;
       cancelSelection();
       chrome.runtime.onMessage.removeListener?.(onRuntimeMessage);
       clearPreviousResult();
@@ -575,3 +589,4 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     }
   };
 }
+})();

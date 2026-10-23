@@ -2,16 +2,23 @@
   "manifest_version": 3,
   "name": "AIVSP DOM Assistant",
   "short_name": "AIVSP DOM",
-  "version": "0.2.6",
+  "version": "0.2.9",
   "description": "Permite elegir una pregunta con Ctrl+Shift+Y y clic izquierdo.",
   "minimum_chrome_version": "110",
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "webNavigation"
   ],
   "host_permissions": [
     "http://127.0.0.1:18791/*"
+  ],
+  "optional_host_permissions": [
+    "https://forms.cloud.microsoft/*",
+    "https://forms.office.com/*",
+    "https://teams.microsoft.com/*",
+    "https://teams.cloud.microsoft/*"
   ],
   "background": {
     "service_worker": "service-worker.js"

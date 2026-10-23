@@ -18,6 +18,11 @@ escritorio con `Ctrl+Shift+F9` continúa disponible como respaldo.
 
 ## Uso
 
+Versión reconstruida: 0.2.9. Para Forms incrustado, abre las opciones, pulsa
+`Habilitar Forms y Teams`, acepta los permisos y actualiza la tarea. La activación se
+realiza por marco; una selección nueva descarta respuestas anteriores. Recargar el
+script ya no provoca redeclaración de constantes. Actualiza la página tras actualizar.
+
 Pulsa el icono de la extensión o `Ctrl+Shift+Y`. Cuando aparezca el aviso compacto
 `AIVSP listo`, haz clic izquierdo dentro del enunciado o la tarjeta de la pregunta.
 
@@ -38,7 +43,8 @@ un radio o rellenar un campo.
 ## Seguridad
 
 - La extensión sólo obtiene acceso temporal a la pestaña activada por el usuario.
-- El único host permitido es el puente local `http://127.0.0.1:18791`.
+- El puente es `http://127.0.0.1:18791`; Forms y Teams tienen permisos opcionales
+  separados para documentos incrustados.
 - El puente requiere un token aleatorio de 256 bits y sólo escucha en loopback.
 - No se guardan credenciales de Ollama o Gemini en Chrome.
 - No se registra el enunciado, las opciones ni la respuesta.

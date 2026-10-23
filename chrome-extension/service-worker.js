@@ -35,13 +35,19 @@ async function armSelection(tab) {
   }
 
   try {
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["content-script.js"]
-    });
-    await chrome.tabs.sendMessage(tab.id, {
-      type: "AIVSP_BEGIN_SELECTION"
-    });
+    const frames = await chrome.webNavigation.getAllFrames({ tabId: tab.id });
+    const results = await Promise.allSettled((frames?.length ? frames : [{ frameId: 0 }]).map(async (frame) => {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id, frameIds: [frame.frameId] },
+        files: ["content-script.js"]
+      });
+      await chrome.tabs.sendMessage(tab.id, {
+        type: "AIVSP_BEGIN_SELECTION"
+      }, { frameId: frame.frameId });
+    }));
+    if (!results.some((result) => result.status === "fulfilled")) {
+      throw new Error("No accessible document");
+    }
     await setBadge(tab.id, "+", "#0369a1");
     setTimeout(() => {
       chrome.action.setBadgeText({ tabId: tab.id, text: "" }).catch(() => {});
@@ -52,6 +58,10 @@ async function armSelection(tab) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "AIVSP_SELECTION_FINISHED" && sender.tab?.id) {
+    chrome.tabs.sendMessage(sender.tab.id, { type: "AIVSP_CANCEL_SELECTION" }).catch(() => {});
+    return false;
+  }
   if (message?.type !== "AIVSP_ASSIST_REQUEST" || !sender.tab?.id) {
     return false;
   }
@@ -105,6 +115,10 @@ async function assist(payload, tabId) {
       };
     }
 
+    if (!isValidResult(body, payload)) {
+      await setBadge(tabId, "!", "#b91c1c");
+      return { ok: false, error: "invalid_inference_response" };
+    }
     await setBadge(tabId, "✓", "#15803d");
     return {
       ok: true,
@@ -125,6 +139,15 @@ async function assist(payload, tabId) {
       chrome.action.setBadgeText({ tabId, text: "" }).catch(() => {});
     }, 3000);
   }
+}
+
+function isValidResult(result, payload) {
+  return result && typeof result === "object" &&
+    result.contextId === payload.contextId && result.mode === payload.mode &&
+    typeof result.answer === "string" && result.answer.trim().length > 0 &&
+    Number.isFinite(result.confidence) && result.confidence >= 0 && result.confidence <= 1 &&
+    (payload.mode !== 1 || payload.options.some((option) =>
+      option.key.toUpperCase() === String(result.optionKey || "").toUpperCase()));
 }
 
 function validatePayload(payload) {

@@ -9,6 +9,17 @@ initialize();
 
 document.getElementById("save").addEventListener("click", save);
 document.getElementById("test").addEventListener("click", testConnection);
+document.getElementById("enable-microsoft-frames").addEventListener("click", async () => {
+  try {
+    const granted = await chrome.permissions.request({
+      origins: chrome.runtime.getManifest().optional_host_permissions
+    });
+    showStatus(granted ? "Forms y Teams habilitados. Actualiza la tarea."
+      : "Acceso no concedido. Abre Forms en una pestaña independiente.", granted);
+  } catch {
+    showStatus("No se pudo conceder acceso. Recarga la extensión.", false);
+  }
+});
 
 async function initialize() {
   const settings = await chrome.storage.local.get({

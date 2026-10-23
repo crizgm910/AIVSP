@@ -2,7 +2,13 @@
 
 **Versión actual: `v0.2.0-beta.1`.**
 
-Última revisión técnica: 29 de julio de 2026.
+Última revisión técnica: 23 de octubre de 2026.
+
+Recuperación: el proyecto eliminado se recuperó desde `main` de GitHub en
+`C:\proyectos\AIVSP-recuperado`. Las correcciones locales de extensión hasta 0.2.9
+se reconstruyeron y sus regresiones JavaScript pasan. El usuario había confirmado
+la cruz/selección dentro de Teams; la detección y aplicación en una tarea real siguen
+pendientes. La migración a Antigravity se realiza después de este punto recuperable.
 
 Esta es la primera candidata beta del MVP avanzado: el flujo principal, sus protecciones
 y su empaquetado cuentan con validación automatizada y pruebas físicas en un monitor.
