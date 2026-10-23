@@ -6,10 +6,10 @@ o generar una respuesta de texto. El modo VLM permanece deshabilitado.
 
 ## Estado
 
-Versión actual: `v0.2.0-beta.2` (extensión en código `0.2.10`).
+Versión actual: `v0.2.0-beta.2` (extensión en código `0.2.11`).
 
 El ZIP completo beta.2 anterior incluye extensión 0.2.9. Para las matrices usa la
-carpeta `chrome-extension/` actual o el ZIP específico de extensión 0.2.10.
+carpeta `chrome-extension/` actual o el ZIP específico de extensión 0.2.11.
 
 - Compilación Release: 0 errores y 0 advertencias.
 - Pruebas automatizadas: 165 aprobadas, más las regresiones JavaScript.

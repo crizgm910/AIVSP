@@ -26,7 +26,8 @@ async function armSelection(tab) {
 
   const settings = await chrome.storage.local.get({
     bridgeToken: "",
-    applyAnswers: false
+    applyAnswers: false,
+    matrixTestMode: false
   });
   if (!isValidToken(settings.bridgeToken)) {
     await chrome.runtime.openOptionsPage();
@@ -42,7 +43,8 @@ async function armSelection(tab) {
         files: ["content-script.js"]
       });
       await chrome.tabs.sendMessage(tab.id, {
-        type: "AIVSP_BEGIN_SELECTION"
+        type: "AIVSP_BEGIN_SELECTION",
+        matrixTestMode: settings.matrixTestMode === true
       }, { frameId: frame.frameId });
     }));
     if (!results.some((result) => result.status === "fulfilled")) {

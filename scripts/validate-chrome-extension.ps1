@@ -47,8 +47,8 @@ if (-not $selectionCommand -or
 if ($manifest.commands.'_execute_action') {
     throw 'El atajo ambiguo _execute_action no debe estar presente.'
 }
-if ($manifest.version -ne '0.2.10') {
-    throw 'La versión esperada de la extensión es 0.2.10.'
+if ($manifest.version -ne '0.2.11') {
+    throw 'La versión esperada de la extensión es 0.2.11.'
 }
 $expectedOptionalHosts = @('https://forms.cloud.microsoft/*', 'https://forms.office.com/*',
     'https://teams.microsoft.com/*', 'https://teams.cloud.microsoft/*')
@@ -80,6 +80,8 @@ $source = Get-ChildItem -LiteralPath $extension -File |
 if ($LASTEXITCODE -ne 0) { throw 'Fallaron las regresiones de selección.' }
 & $node.Source (Join-Path $root 'tests\chrome-extension-matrix-harness.mjs')
 if ($LASTEXITCODE -ne 0) { throw 'Fallaron las regresiones de matrices.' }
+& $node.Source (Join-Path $root 'tests\chrome-extension-options-harness.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Fallaron las regresiones de opciones.' }
 $forbiddenPatterns = @(
     '<all_urls>',
     'externally_connectable',
@@ -109,7 +111,7 @@ $requiredSubtlePatterns = @(
     'result.confidence >= 0.75',
     '"AIVSP · revisa"',
     'if (!mayApply)',
-    'AIVSP_CONTENT_SCRIPT_VERSION = "0.2.10"',
+    'AIVSP_CONTENT_SCRIPT_VERSION = "0.2.11"',
     '__aivspDomAssistantController'
 )
 foreach ($pattern in $requiredSubtlePatterns) {

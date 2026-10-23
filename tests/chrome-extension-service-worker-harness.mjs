@@ -8,6 +8,7 @@ const injectedTabs = [];
 const sentMessages = [];
 const badges = [];
 let frames = [{ frameId: 0 }], blocked = [];
+let matrixTestMode = false;
 
 globalThis.setTimeout = (callback) => {
   callback();
@@ -53,7 +54,7 @@ globalThis.chrome = {
       async get(defaults) {
         return {
           ...defaults,
-          bridgeToken: "A".repeat(64)
+          bridgeToken: "A".repeat(64), matrixTestMode
         };
       }
     }
@@ -82,7 +83,7 @@ assert.equal(activeQueryCount, 1);
 assert.deepEqual(injectedTabs, [17]);
 assert.deepEqual(sentMessages, [{
   tabId: 17,
-  message: { type: "AIVSP_BEGIN_SELECTION", frameId: 0 }
+  message: { type: "AIVSP_BEGIN_SELECTION", matrixTestMode: false, frameId: 0 }
 }]);
 assert.ok(badges.some((badge) => badge.tabId === 17 && badge.text === "+"));
 
@@ -94,7 +95,7 @@ await actionListener({ id: 23 });
 assert.deepEqual(injectedTabs, [17, 23]);
 assert.deepEqual(sentMessages[1], {
   tabId: 23,
-  message: { type: "AIVSP_BEGIN_SELECTION", frameId: 0 }
+  message: { type: "AIVSP_BEGIN_SELECTION", matrixTestMode: false, frameId: 0 }
 });
 
 frames = [{ frameId: 0 }, { frameId: 4 }, { frameId: 9 }]; blocked = [4];
@@ -120,6 +121,13 @@ status = 429; body = { error: "assistant_busy" }; assert.equal((await request())
 error = Object.assign(Error(), { name: "AbortError" }); assert.equal((await request()).error, "bridge_timeout");
 error = Error(); assert.equal((await request()).error, "bridge_unavailable");
 assert.equal((await request({ ...payload, question: "" })).error, "invalid_question");
+
+frames = [{ frameId: 0 }]; blocked = []; matrixTestMode = true;
+await commandListener("select-question");
+assert.equal(sentMessages.at(-1).message.matrixTestMode, true);
+matrixTestMode = "true";
+await commandListener("select-question");
+assert.equal(sentMessages.at(-1).message.matrixTestMode, false);
 
 console.log(
   "Service worker validado: comando explícito e icono comparten la selección.");

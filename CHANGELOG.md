@@ -7,6 +7,11 @@ con sufijo `alpha` o `beta` son preliminares y pueden contener defectos conocido
 
 ## [Sin publicar]
 
+- Extensión `0.2.11`: modo de prueba de matrices, apagado por defecto. Al activarlo
+  explícitamente en Opciones, hace clic en la primera opción de la fila elegida,
+  sin consultar IA ni enviar el formulario. No representa una calificación correcta.
+- Regresiones de activación, persistencia, desactivación, aislamiento de filas,
+  cancelación por destino desconectado y preguntas abiertas con el modo activo.
 - Extensión `0.2.10`: reconocimiento de matrices HTML/ARIA, opciones por columna
   y consulta de una fila por activación. Una selección ambigua pide elegir fila.
 - Rúbricas con valoraciones como Excelente/Bueno/Regular/Deficiente: reconocimiento

@@ -1,12 +1,17 @@
 # Estado del proyecto: AIVSP
 
-**Versión actual: `v0.2.0-beta.2`; extensión en código `0.2.10`.**
+**Versión actual: `v0.2.0-beta.2`; extensión en código `0.2.11`.**
+
+Modo de prueba de matrices: opción desactivada por defecto en las opciones de la
+extensión. Hace clic en la primera columna de respuesta de una fila seleccionada,
+sin IA, sin envío del formulario y sin afirmar que sea una calificación correcta.
+Validación automatizada aprobada; la prueba física de la rúbrica de Teams sigue pendiente.
 
 Actualización de extensión: soporte inicial de matrices HTML/ARIA con separación
 por fila, encabezados verificados y aviso para rúbricas sin evidencia. Pruebas JS
 de matrices y 165 pruebas .NET aprobadas. Falta probar la matriz real de Teams.
 El ZIP completo beta.2 generado antes de este cambio contiene extensión 0.2.9;
-para matrices usar `chrome-extension/` actual o el ZIP de extensión 0.2.10.
+para matrices usar `chrome-extension/` actual o el ZIP de extensión 0.2.11.
 
 Validación física posterior de Antigravity: tres preguntas de opción múltiple y
 tres abiertas completadas en logs; el usuario confirmó autopegado en el campo

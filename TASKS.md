@@ -2,6 +2,15 @@
 
 Estados: `Pendiente`, `En progreso`, `Bloqueada`, `Terminada`.
 
+## Plan: modo de prueba de matrices — 2026-10-23
+
+- [x] Añadir opción desactivada por defecto y aviso de primera opción fija, sin IA.
+- [x] Transmitirla al armar selección y limitarla a una fila de matriz por activación.
+- [x] Validar destino vigente/habilitado antes del clic; no enviar el formulario.
+- [x] Probar modo apagado/encendido, opciones y regresiones normales; sin nuevos permisos.
+- [x] Documentar cómo activarlo/desactivarlo y preparar extensión 0.2.11.
+- [ ] Confirmar físicamente el clic en la rúbrica real de Teams.
+
 ## Plan: preguntas matriz/Likert en extensión — 2026-10-23
 
 - [x] Reconocer tablas HTML y matrices ARIA, asociando fila y columnas.

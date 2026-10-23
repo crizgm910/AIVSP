@@ -7,6 +7,7 @@ class Element {
   append(...children) { for (const child of children) { child.parentElement = this; this.children.push(child); } return this; }
   getAttribute(name) { return this.attributes[name] ?? null; }
   setAttribute(name, value) { this.attributes[name] = value; }
+  click() { this.clickCount = (this.clickCount || 0) + 1; }
   getBoundingClientRect() { return { width: 100, height: 30 }; }
   matches(selector) { return selector.split(",").some(part => {
     part = part.trim();
@@ -64,6 +65,17 @@ assert.equal(context.testMatrix(rating.card).options.length, 4);
 await context.testProcess(rating.table);
 assert.equal(requests.length, 0, "A rubric without evidence must not be sent for an invented grade");
 assert.match(elements.get("aivsp-dom-status").title, /requiere revisar el trabajo/);
+await context.testProcess(rating.table, true);
+assert.equal(requests.length, 0, "Test mode must not query AI");
+assert.equal(rating.rows[0].children[1].children[0].clickCount, 1);
+assert.equal(rating.rows[0].children[2].children[0].clickCount, undefined);
+assert.match(elements.get("aivsp-dom-status").title, /PRUEBA sin IA/);
+const testRows = fixture();
+await context.testProcess(testRows.rows[1], true);
+assert.equal(testRows.rows[1].children[1].children[0].clickCount, 1);
+assert.equal(testRows.rows[0].children[1].children[0].clickCount, undefined);
+const stale = fixture(); stale.card.isConnected = false;
+await assert.rejects(() => context.testProcess(stale.rows[0], true), /Prueba cancelada/);
 const objective = fixture();
 await context.testProcess(objective.rows[1]);
 assert.equal(requests.length, 1);

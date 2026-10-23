@@ -2,6 +2,17 @@
 
 ## Matrices y escalas (0.2.10)
 
+### Prueba opcional de marcado (0.2.11)
+
+En las opciones de la extensión activa **PRUEBA de matrices: marcar siempre la
+primera opción de la fila (sin IA)** y pulsa Guardar. Está apagada por defecto.
+Después activa el selector y pulsa una fila de la matriz: hará clic en su primera
+opción, por ejemplo Excelente, únicamente para comprobar la integración DOM.
+No es una respuesta evaluada y no utiliza IA ni envía el formulario. Es independiente
+de la opción de aplicar respuestas de IA. Las preguntas normales conservan su flujo.
+Desmarca la prueba y guarda al terminar; el ajuste permanece activo hasta que lo
+desactives. Cada activación del selector permite un clic, no procesa toda la matriz.
+
 Reconoce tablas HTML y matrices con roles ARIA `table`/`grid`, filas, celdas y
 encabezados. Consulta una fila por activación: pulsa su texto o uno de sus radios.
 Si solo hay una fila, puedes pulsar el enunciado; con varias, debes elegir fila.
@@ -39,7 +50,7 @@ escritorio con `Ctrl+Shift+F9` continúa disponible como respaldo.
 
 ## Uso
 
-Versión actual: 0.2.10. Para Forms incrustado, abre las opciones, pulsa
+Versión actual: 0.2.11. Para Forms incrustado, abre las opciones, pulsa
 `Habilitar Forms y Teams`, acepta los permisos y actualiza la tarea. La activación se
 realiza por marco; una selección nueva descarta respuestas anteriores. Recargar el
 script ya no provoca redeclaración de constantes. Actualiza la página tras actualizar.

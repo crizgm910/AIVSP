@@ -26,11 +26,11 @@ const context = vm.createContext({
   location: { origin: "https://forms.office.com", pathname: "/response" }, setTimeout() {}
 });
 const inject = (s = source) => vm.runInContext(s, context);
-const send = type => { for (const f of listeners) f({ type }); };
+const send = (type, extra = {}) => { for (const f of listeners) f({ type, ...extra }); };
 inject(); const initial = context.__aivspDomAssistantController;
 for (let i = 0; i < 5; i++) { inject(); send("AIVSP_BEGIN_SELECTION"); assert.equal(listeners.size, 1); assert.equal(context.__aivspDomAssistantController, initial); assert.ok(classes.has("aivsp-selection-active")); }
 inject('const AIVSP_CONTENT_SCRIPT_VERSION = "0.2.8"; const previousAivspController = null;'); inject();
-inject(source.replace('VERSION = "0.2.10"', 'VERSION = "test-upgrade"'));
+inject(source.replace('VERSION = "0.2.11"', 'VERSION = "test-upgrade"'));
 assert.equal(listeners.size, 1); assert.notEqual(context.__aivspDomAssistantController, initial);
 send("AIVSP_BEGIN_SELECTION"); events.get("keydown")({ key: "Escape" }); assert.equal(events.has("click"), false);
 send("AIVSP_BEGIN_SELECTION"); send("AIVSP_CANCEL_SELECTION"); assert.equal(classes.size, 0);
@@ -53,4 +53,8 @@ assert.equal(elements.get("aivsp-dom-status").className, "aivsp-status-selection
 const closing = click(first); context.__aivspDomAssistantController.dispose(); pending[3].resolve(response("Tardía")); await closing;
 assert.equal(first.input.value, ""); assert.equal(elements.has("aivsp-dom-status"), false);
 inject(); assert.equal(listeners.size, 1);
+send("AIVSP_BEGIN_SELECTION", { matrixTestMode: true });
+const openWithTestMode = click(first);
+pending[4].resolve(response("Respuesta normal")); await openWithTestMode;
+assert.equal(first.input.value, "Respuesta normal", "Matrix test mode must not replace normal open answers");
 console.log("Selector: reinyección, actualización, Escape, texto abierto y respuestas tardías aprobados.");

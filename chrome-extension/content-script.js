@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const AIVSP_CONTENT_SCRIPT_VERSION = "0.2.10";
+const AIVSP_CONTENT_SCRIPT_VERSION = "0.2.11";
 const previousAivspController = globalThis.__aivspDomAssistantController;
 if (previousAivspController?.version !== AIVSP_CONTENT_SCRIPT_VERSION) {
   previousAivspController?.dispose?.();
@@ -20,7 +20,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
 
   const onRuntimeMessage = (message) => {
     if (message?.type === "AIVSP_BEGIN_SELECTION") {
-      beginSelection();
+      beginSelection(undefined, message.matrixTestMode === true);
     } else if (message?.type === "AIVSP_CANCEL_SELECTION" && STATE.cleanupSelection) {
       cancelSelection();
       STATE.statusElement?.remove();
@@ -29,12 +29,12 @@ if (!globalThis.__aivspDomAssistantInstalled) {
   chrome.runtime.onMessage.addListener(onRuntimeMessage);
 
   function beginSelection(
-    message = "AIVSP · clic en pregunta") {
+    message = "AIVSP · clic en pregunta", matrixTestMode = false) {
     STATE.generation++;
     STATE.activeContext = null;
     cancelSelection();
     clearPreviousResult();
-    showStatus(message, "selection", 0);
+    showStatus(matrixTestMode ? "PRUEBA: haz clic en una fila de matriz; se marcará su primera opción sin IA." : message, "selection", 0);
     document.documentElement.classList.add("aivsp-selection-active");
 
     const onClick = async (event) => {
@@ -46,7 +46,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
       chrome.runtime.sendMessage({ type: "AIVSP_SELECTION_FINISHED" }).catch(() => {});
 
       try {
-        await processTarget(target);
+        await processTarget(target, matrixTestMode);
       } catch (error) {
         if (generation !== STATE.generation) return;
         showStatus(
@@ -73,10 +73,21 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     };
   }
 
-  async function processTarget(target) {
+  async function processTarget(target, matrixTestMode = false) {
     const generation = STATE.generation;
     const context = extractContext(target);
     STATE.activeContext = context;
+    if (matrixTestMode === true && context.isMatrix) {
+      const radio = context.optionElements.get("A");
+      if (!context.root.isConnected || !radio?.isConnected || !context.root.contains(radio) ||
+          radio.disabled || radio.getAttribute("aria-disabled") === "true" ||
+          createFingerprint(context.root, context.payload.question, context.payload.options) !== context.fingerprint) {
+        throw new Error("Prueba cancelada: la fila ya no está disponible.");
+      }
+      radio.click();
+      showStatus(`PRUEBA sin IA: clic en primera opción (${context.payload.options[0].text}). No es una respuesta evaluada.`, "warning", 6500);
+      return;
+    }
     if (context.requiresEvidence) {
       showStatus("Matriz reconocida. Esta valoración requiere revisar el trabajo; no se seleccionará una calificación automáticamente.", "warning", 6500);
       return;
@@ -125,6 +136,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
       root,
       input,
       requiresEvidence: matrix?.requiresEvidence === true,
+      isMatrix: !!matrix,
       optionElements: new Map(options.map((option, index) => [
         option.key.toUpperCase(),
         radios[index]

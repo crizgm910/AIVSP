@@ -3,6 +3,7 @@
 const BRIDGE_URL = "http://127.0.0.1:18791";
 const tokenInput = document.getElementById("bridge-token");
 const applyAnswersInput = document.getElementById("apply-answers");
+const matrixTestModeInput = document.getElementById("matrix-test-mode");
 const statusOutput = document.getElementById("status");
 
 initialize();
@@ -24,10 +25,12 @@ document.getElementById("enable-microsoft-frames").addEventListener("click", asy
 async function initialize() {
   const settings = await chrome.storage.local.get({
     bridgeToken: "",
-    applyAnswers: false
+    applyAnswers: false,
+    matrixTestMode: false
   });
   tokenInput.value = settings.bridgeToken;
   applyAnswersInput.checked = settings.applyAnswers === true;
+  matrixTestModeInput.checked = settings.matrixTestMode === true;
 }
 
 async function save() {
@@ -39,7 +42,8 @@ async function save() {
 
   await chrome.storage.local.set({
     bridgeToken,
-    applyAnswers: applyAnswersInput.checked
+    applyAnswers: applyAnswersInput.checked,
+    matrixTestMode: matrixTestModeInput.checked
   });
   showStatus("Configuración guardada localmente.", true);
 }
