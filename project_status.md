@@ -1,5 +1,11 @@
 # Estado del proyecto: AIVSP
 
+Prueba de viabilidad visual (2026-11-20): Antigravity CLI 1.5.1 por ACP leyó PNGs
+adjuntos con el modelo Gemini 3.8 Flash y esfuerzo bajo: código aleatorio central
+y Saturno en cuadrícula, ambos correctos. Prueba negativa de lectura bloqueada sin
+herramientas. Ver `tests/ANTIGRAVITY-ACP-PROBE.md`. Solo es un prototipo aislado;
+la aplicación y extensión publicadas todavía no reciben ni interpretan imágenes.
+
 Actualización de pruebas: 20 de noviembre de 2026. Laboratorio local con 35 casos
 en `tests/forms-lab/`, incluidos desplegables, selección múltiple, imagen compartida
 por tres preguntas e iframes de dos orígenes. Verificado en Chrome headless con

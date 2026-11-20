@@ -7,6 +7,10 @@ con sufijo `alpha` o `beta` son preliminares y pueden contener defectos conocido
 
 ## [Sin publicar]
 
+- Prueba aislada `probe-antigravity-acp.cjs`: negocia imagen inline por ACP,
+  selecciona modelo y esfuerzo de sesión, valida código visual aleatorio y
+  posición de un planeta, y prueba rechazo de lectura de archivo. Resultado real
+  aprobado con agy 1.5.1; no altera la integración de producción ni habilita VLM.
 - Ampliado el laboratorio a 35 casos: cuadrícula visual con desplegable ARIA por
   clic/teclado e imagen suelta con tres preguntas posteriores sin asociaciones DOM.
   No activa VLM ni añade capacidad de visión al asistente.

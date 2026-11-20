@@ -2,6 +2,18 @@
 
 Estados: `Pendiente`, `En progreso`, `Bloqueada`, `Terminada`.
 
+## Plan: prueba aislada de imágenes con Antigravity ACP — 2026-11-20
+
+- [x] Negociar capacidades ACP sin acceso a archivos/terminal del cliente.
+- [x] Crear perfil temporal restringido y cliente que rechaza permisos; prueba negativa sin herramientas.
+- [x] Enviar imagen sintética con código aleatorio no incluido en el texto; coincidencia exacta.
+- [x] Probar imagen espacial con Gemini 3.8 Flash y nivel bajo, sin fallback silencioso.
+- [x] Documentar resultado real, límites y limpieza; app/extensión permanecen sin cambios.
+- [ ] Integrar cliente ACP de producción con límites, cancelación y validación estructurada.
+- [ ] Transportar imágenes y asociación de estímulos en el puente extensión/app.
+- [ ] Añadir contratos de varias respuestas y controles desplegables, con pruebas de regresión.
+- [ ] Validar el flujo completo en laboratorio y después en un formulario real de Teams.
+
 ## Plan: imagen espacial y asociación implícita — 2026-11-20
 
 - [x] Añadir cuadrícula visual con pregunta espacial y desplegable personalizado.
