@@ -48,6 +48,34 @@
     });
     return group;
   }
+  function customSelect(item) {
+    const group = node("div", undefined, { class: "custom-dropdown" });
+    const popup = node("div", undefined, { id: `${item.id}-list`, role: "listbox", "aria-label": "Opciones" });
+    popup.hidden = true;
+    const trigger = node("button", "Selecciona la respuesta", { type: "button", role: "combobox", "aria-expanded": "false", "aria-haspopup": "listbox", "aria-controls": popup.id, "aria-label": item.title });
+    function close() { popup.hidden = true; trigger.setAttribute("aria-expanded", "false"); }
+    function open(index = 0) { popup.hidden = false; trigger.setAttribute("aria-expanded", "true"); popup.children[index].focus(); }
+    item.options.forEach((text, index) => {
+      const option = node("div", text, { role: "option", tabindex: "-1", "aria-selected": "false" });
+      function choose() {
+        popup.querySelectorAll('[role="option"]').forEach(candidate => candidate.setAttribute("aria-selected", String(candidate === option)));
+        trigger.textContent = text; close(); trigger.focus();
+      }
+      option.addEventListener("click", choose);
+      option.addEventListener("keydown", event => {
+        if (["Enter", " "].includes(event.key)) { event.preventDefault(); choose(); }
+        else if (event.key === "Escape") { event.preventDefault(); close(); trigger.focus(); }
+        else if (["ArrowDown", "ArrowUp"].includes(event.key)) { event.preventDefault(); popup.children[(index + (event.key === "ArrowDown" ? 1 : -1) + item.options.length) % item.options.length].focus(); }
+      });
+      popup.append(option);
+    });
+    trigger.addEventListener("click", () => popup.hidden ? open() : close());
+    trigger.addEventListener("keydown", event => {
+      if (["ArrowDown", "ArrowUp"].includes(event.key)) { event.preventDefault(); open(event.key === "ArrowDown" ? 0 : item.options.length - 1); }
+      else if (event.key === "Escape") close();
+    });
+    group.append(trigger, popup); return group;
+  }
   function matrix(item) {
     const aria = item.type === "aria-matrix";
     const grid = node(aria ? "div" : "table", undefined, aria ? { role: "grid", "aria-label": item.title } : {});
@@ -67,7 +95,9 @@
     return node("div", undefined, { class: "table-wrap" }).appendChild(grid).parentElement;
   }
   function controls(item, card, heading) {
-    if (["radio", "checkbox", "aria-radio"].includes(item.type)) card.append(radios(item));
+    if (item.image) card.append(node("img", undefined, { src: item.image, alt: "Cuadrícula de cuerpos celestes; posiciones y etiquetas disponibles únicamente en la imagen.", class: "spatial-image" }));
+    if (item.type === "custom-select") card.append(customSelect(item));
+    else if (["radio", "checkbox", "aria-radio"].includes(item.type)) card.append(radios(item));
     else if (item.type.includes("matrix")) card.append(matrix(item));
     else if (["select", "multiselect"].includes(item.type)) card.append(select(item.options, item.title, item.type === "multiselect"));
     else if (["textarea", "editable"].includes(item.type)) {
@@ -105,6 +135,13 @@
   function render() {
     const container = document.getElementById("cases"); container.replaceChildren(); results.clear();
     cases.forEach(item => {
+      if (item.id === "implicit-center") {
+        // Deliberately no id, aria-describedby or stimulus metadata linking this
+        // loose image to the three following question cards.
+        const loose = node("figure", undefined, { class: "shared-stimulus" });
+        loose.append(node("img", undefined, { src: "space-grid.svg", alt: "Imagen de cuerpos celestes, sin transcripción textual." }));
+        container.append(loose);
+      }
       if (item.id === "shared-most") {
         const stimulus = node("figure", undefined, { id: "sales-chart", class: "card shared-stimulus" });
         stimulus.append(node("h2", "Imagen compartida: VENTAS"), node("img", undefined, {

@@ -2,6 +2,13 @@
 
 Estados: `Pendiente`, `En progreso`, `Bloqueada`, `Terminada`.
 
+## Plan: imagen espacial y asociación implícita — 2026-11-20
+
+- [x] Añadir cuadrícula visual con pregunta espacial y desplegable personalizado.
+- [x] Añadir imagen suelta seguida de tres preguntas sin asociaciones DOM explícitas.
+- [x] Probar clic, teclado, separación de preguntas, imágenes y exportación; 35 casos.
+- [x] Documentar que son fixtures, no soporte de visión; preparar respaldo.
+
 ## Plan: laboratorio de formularios — 2026-11-20
 
 - [x] Crear catálogo de 31 preguntas con respuestas esperadas separadas.

@@ -1,6 +1,6 @@
 # Laboratorio de formularios AIVSP
 
-31 casos sintéticos para comprobar **detección**, **respuesta** y **aplicación**
+35 casos sintéticos para comprobar **detección**, **respuesta** y **aplicación**
 por separado. No es un Microsoft Forms nativo ni reproduce exactamente Teams.
 No hay envío de formulario ni subida de archivos a un servidor.
 
@@ -32,6 +32,12 @@ la prueba de dos orígenes y puede necesitar acceso a archivos en la extensión.
   con `data-stimulus-id` y una descripción accesible. El dato no se transcribe en
   los enunciados: el extractor textual actual no puede resolverlo por sí solo.
 - Enunciado que cambia durante la espera y dos iframes de diferente origen.
+- Cuadrícula visual 3×3 de cuerpos celestes y pregunta espacial con desplegable
+  personalizado ARIA (`combobox`/`listbox`/`option`), no solo un `<select>` nativo.
+- Otra imagen suelta seguida de tres tarjetas, sin imágenes copiadas dentro,
+  sin `data-stimulus-id`, sin `aria-describedby` y sin identificador que las vincule
+  al estímulo. Se requiere asociar el contexto visual previo incluso cuando la
+  imagen queda fuera de pantalla. Contrasta con la gráfica que sí tiene vínculos DOM.
 
 Los rótulos de soporte describen el estado del código, **no certifican que todos
 los casos funcionen**. Los no implementados están incluidos precisamente para
@@ -60,7 +66,7 @@ Con el servidor ejecutándose y Playwright disponible en Node:
 node tests/forms-lab-browser.cjs
 ```
 
-Se usó Chrome headless en un perfil aislado, sin consultar IA: 31 tarjetas,
+Se usó Chrome headless en un perfil aislado, sin consultar IA: 35 tarjetas,
 controles nativos y ARIA, guía separada, filtros, exportación manual, imagen
 compartida por tres tarjetas, dos orígenes de iframe y layout de 390 px.
 Se ejecutó también el content script real con un puente simulado, sin probar

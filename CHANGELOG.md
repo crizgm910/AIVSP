@@ -7,6 +7,9 @@ con sufijo `alpha` o `beta` son preliminares y pueden contener defectos conocido
 
 ## [Sin publicar]
 
+- Ampliado el laboratorio a 35 casos: cuadrícula visual con desplegable ARIA por
+  clic/teclado e imagen suelta con tres preguntas posteriores sin asociaciones DOM.
+  No activa VLM ni añade capacidad de visión al asistente.
 - 2026-11-20: laboratorio local de 31 casos con registro manual de detección,
   respuesta y aplicación; exportación JSON sin respuestas ni tokens, dos orígenes
   de iframe y una imagen compartida por tres preguntas. Pruebas de navegador con

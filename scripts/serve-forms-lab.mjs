@@ -4,7 +4,8 @@ const root = new URL("../tests/forms-lab/", import.meta.url);
 const files = new Map([["/", ["index.html", "text/html"]], ["/index.html", ["index.html", "text/html"]],
   ["/cases.html", ["cases.html", "text/html"]], ["/cases.js", ["cases.js", "text/javascript"]],
   ["/lab.js", ["lab.js", "text/javascript"]], ["/styles.css", ["styles.css", "text/css"]],
-  ["/shared-chart.svg", ["shared-chart.svg", "image/svg+xml"]]]);
+  ["/shared-chart.svg", ["shared-chart.svg", "image/svg+xml"]],
+  ["/space-grid.svg", ["space-grid.svg", "image/svg+xml"]]]);
 const servers = [];
 for (const port of [8765, 8766]) {
   const server = http.createServer(async (request, response) => {

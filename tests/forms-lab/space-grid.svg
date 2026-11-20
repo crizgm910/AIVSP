@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="570" height="510" viewBox="0 0 570 510">
+<rect width="570" height="510" fill="white"/>
+<g stroke="#d9e4ef" fill="none"><path d="M190 0v510M380 0v510M0 170h570M0 340h570"/></g>
+<g><circle cx="95" cy="65" r="42" fill="#f6c928"/><circle cx="285" cy="65" r="35" fill="#c8bbb1"/><circle cx="475" cy="65" r="39" fill="#af8959"/>
+<path d="M440 55h70m-72 16h74m-65 15h56" stroke="#ecdfb7" stroke-width="9"/>
+<circle cx="95" cy="235" r="36" fill="#245cc2"/><circle cx="285" cy="235" r="33" fill="#d8bd72"/><ellipse cx="285" cy="235" rx="65" ry="15" transform="rotate(-25 285 235)" fill="none" stroke="#a89968" stroke-width="7"/>
+<circle cx="475" cy="235" r="37" fill="#66aad6"/><path d="M455 205l25 8 9 26-22 18-12-19" fill="#81ac53"/>
+<circle cx="95" cy="405" r="34" fill="#8cbbc4"/><circle cx="285" cy="405" r="30" fill="#947b64"/><circle cx="475" cy="405" r="33" fill="#c96142"/></g>
+<g font-family="sans-serif" font-size="18" fill="#273d50" text-anchor="middle"><text x="95" y="135">SOL</text><text x="285" y="135">VENUS</text><text x="475" y="135">JÚPITER</text><text x="95" y="305">NEPTUNO</text><text x="285" y="305">SATURNO</text><text x="475" y="305">TIERRA</text><text x="95" y="475">URANO</text><text x="285" y="475">MERCURIO</text><text x="475" y="475">MARTE</text></g></svg>

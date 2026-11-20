@@ -2,8 +2,10 @@
 
 ## Laboratorio de preguntas (20 de noviembre de 2026)
 
-31 casos de prueba, incluidas varias respuestas, desplegables, matrices y una
+35 casos de prueba, incluidas varias respuestas, desplegables, matrices y una
 imagen compartida por tres preguntas. Es una fixture local, no un Forms nativo.
+Incluye también una imagen suelta sin vínculos DOM y tres preguntas posteriores,
+además de una pregunta espacial con desplegable personalizado como la captura.
 
 ```powershell
 node scripts/serve-forms-lab.mjs
