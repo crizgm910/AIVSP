@@ -7,6 +7,11 @@ con sufijo `alpha` o `beta` son preliminares y pueden contener defectos conocido
 
 ## [Sin publicar]
 
+- 2026-11-20: laboratorio local de 31 casos con registro manual de detección,
+  respuesta y aplicación; exportación JSON sin respuestas ni tokens, dos orígenes
+  de iframe y una imagen compartida por tres preguntas. Pruebas de navegador con
+  Chrome headless y extractor real contra puente simulado. No cambia la lógica
+  del asistente; documenta el fallo de matriz vecina encontrado durante la prueba.
 - Extensión `0.2.12`: avisos de texto visibles exclusivamente durante el modo de
   prueba, diagnóstico local de las últimas 24 etapas (sin URL, preguntas ni tokens)
   y verificación de `checked`/`aria-checked` tras el clic. Un clic sin selección

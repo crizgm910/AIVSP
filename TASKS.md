@@ -2,6 +2,17 @@
 
 Estados: `Pendiente`, `En progreso`, `Bloqueada`, `Terminada`.
 
+## Plan: laboratorio de formularios — 2026-11-20
+
+- [x] Crear catálogo de 31 preguntas con respuestas esperadas separadas.
+- [x] Cubrir controles comunes, matrices, accesibilidad y controles no soportados.
+- [x] Añadir una imagen compartida por tres preguntas, selección múltiple y desplegables.
+- [x] Incluir iframes de mismo origen y origen distinto, sin simular que sean Teams.
+- [x] Permitir registrar y exportar resultados manuales, sin enviar formularios.
+- [x] Validar el laboratorio en Chrome headless y regresiones sin cambiar el extractor.
+- [ ] Corregir por separado el fallo reproducido: matriz vecina captura preguntas normales.
+- [ ] Implementar selección múltiple, desplegables e imágenes compartidas tras definir contratos y pruebas.
+
 ## Plan: diagnosticar matriz real de Teams — 2026-10-23
 
 - [x] Revisar grabación: prueba activada, conexión correcta, ningún radio marcado.

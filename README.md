@@ -1,5 +1,18 @@
 # AIVSP
 
+## Laboratorio de preguntas (20 de noviembre de 2026)
+
+31 casos de prueba, incluidas varias respuestas, desplegables, matrices y una
+imagen compartida por tres preguntas. Es una fixture local, no un Forms nativo.
+
+```powershell
+node scripts/serve-forms-lab.mjs
+```
+
+Abre `http://127.0.0.1:8765` en Chrome. Consulta
+[`tests/forms-lab/README.md`](tests/forms-lab/README.md) para tipos, registro de
+resultados, iframes y limitaciones conocidas. No añade soporte nuevo al extractor.
+
 AIVSP es un asistente local de escritorio para Windows. Captura la ventana activa,
 extrae texto mediante OCR y utiliza un proveedor de inferencia para marcar una opción
 o generar una respuesta de texto. El modo VLM permanece deshabilitado.

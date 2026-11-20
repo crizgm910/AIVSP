@@ -1,5 +1,12 @@
 # Estado del proyecto: AIVSP
 
+Actualización de pruebas: 20 de noviembre de 2026. Laboratorio local con 31 casos
+en `tests/forms-lab/`, incluidos desplegables, selección múltiple, imagen compartida
+por tres preguntas e iframes de dos orígenes. Verificado en Chrome headless con
+puente simulado y sin IA. No se han implementado esos tipos en la extensión.
+Se reprodujo un fallo de selección de contenedor: una matriz vecina puede
+interceptar preguntas normales en el mismo marco. Se documenta, no se declara corregido.
+
 **Versión actual: `v0.2.0-beta.2`; extensión en código `0.2.12`.**
 
 La prueba real grabada de Teams no marcó el radio. Se confirmó opción de prueba
