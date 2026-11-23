@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+globalThis.importScripts = name => vm.runInThisContext(readFileSync(new URL('../chrome-extension/' + name, import.meta.url), 'utf8'));
 let listener, granted = false, consent = true, fetches = 0, mode = 'ok';
 let requested, options;
 const releases = [];

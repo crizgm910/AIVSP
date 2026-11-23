@@ -1,6 +1,30 @@
 # Estado del proyecto: AIVSP
 
-**Versión de prueba actual: `v0.3.0-alpha.2`; extensión en código `0.3.8`.**
+**Versión de prueba actual: `v0.3.0-alpha.2`; extensión en código `0.4.1`.**
+
+23 de noviembre, ajuste solicitado: autorizar por Ctrl+Shift+9 y clic en imagen.
+Sin automático: mensajes visibles y confirmación manual por dominio. Con automático:
+permiso HTTPS amplio al activarlo, pero el broker solo acepta imágenes seleccionadas
+con el atajo, no al consultar preguntas. Ticket de un uso y elecciones exactas en RAM
+por pestaña/documento, acotadas/caducables. No llama a IA ni descarga al autorizar.
+Automático apagado por defecto, indicadores pequeños al usarlo, sin alterar app/token.
+Pruebas unitarias y UI aislada aprobadas; permiso/atajo real en Chrome y Teams pendientes.
+Banco completo de regresiones y 190 pruebas .NET aprobados para esta revisión.
+ZIP independiente 0.4.1; no cambia el acceso directo ni el ejecutable alpha.2.
+La captura posterior del usuario confirma que Chrome muestra AIVSP 0.4.1 cargado;
+no confirma por sí sola la autorización ni el funcionamiento en Teams.
+
+23 de noviembre: nueva ampliación de dominios HTTPS de imágenes, pendiente de prueba
+física. Autorización exacta en Opciones y registro independiente; no solicita acceso
+a todos los sitios. Ruta Forms preservada, cache acotada solo RAM con frescura HTTP
+y revocación. Sin cambios de app, OCR, inferencia, autopegado o token. No descarga con
+cookies ni sigue redirecciones. Bloquea IP/nombres locales conocidos, pero no verifica
+si un nombre público resuelve a red privada: límite explícito y dominios de confianza.
+Pruebas locales en política/broker y navegador aislado; la UI Chrome se simula.
+La confirmación física de Forms anterior pertenece a extensión 0.3.8, no a esta nueva.
+Validación de esta ampliación: 190 pruebas .NET y banco completo de regresiones de
+navegador aprobados, incluida interfaz de Opciones renderizada. ZIP independiente
+0.4.0; el paquete completo alpha.2 anterior sigue conteniendo la extensión 0.3.5.
 
 Confirmación del usuario (registrada el 23 de noviembre de 2026): la última prueba
 funcionó en Forms directamente. Teams todavía no fue probado y se comprobará más

@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const AIVSP_CONTENT_SCRIPT_VERSION = "0.3.8";
+const AIVSP_CONTENT_SCRIPT_VERSION = "0.4.1";
 const previousAivspController = globalThis.__aivspDomAssistantController;
 if (previousAivspController?.version !== AIVSP_CONTENT_SCRIPT_VERSION) {
   previousAivspController?.dispose?.();
@@ -22,12 +22,47 @@ if (!globalThis.__aivspDomAssistantInstalled) {
   const onRuntimeMessage = (message) => {
     if (message?.type === "AIVSP_BEGIN_SELECTION") {
       beginSelection(undefined, message.matrixTestMode === true, message.allowBrowserImages === true, message.diagnosticMode === true);
+    } else if (message?.type === 'AIVSP_BEGIN_IMAGE_AUTHORIZATION') {
+      beginImageAuthorization(message.ticket, message.automatic === true);
     } else if (message?.type === "AIVSP_CANCEL_SELECTION" && STATE.cleanupSelection) {
       cancelSelection();
       STATE.statusElement?.remove();
     }
   };
   chrome.runtime.onMessage.addListener(onRuntimeMessage);
+
+  function beginImageAuthorization(ticket, automatic) {
+    STATE.generation++;
+    const generation = STATE.generation;
+    STATE.activeContext = null; STATE.testDiagnostics = !automatic;
+    cancelSelection(); clearPreviousResult();
+    showStatus('Autorización de imagen: haz clic directamente en la imagen. No se consultará IA.', 'selection', 0);
+    document.documentElement.classList.add('aivsp-selection-active');
+    const onClick = async event => {
+      event.preventDefault(); event.stopImmediatePropagation(); cancelSelection();
+      chrome.runtime.sendMessage({ type: 'AIVSP_SELECTION_FINISHED' }).catch(() => {});
+      const image = event.target instanceof Element ? event.target.closest('img') : null;
+      if (!image || !isVisible(image)) { showStatus('Haz clic directamente sobre una imagen; vuelve a activar el atajo.', 'error', 5000); return; }
+      try {
+        const result = await chrome.runtime.sendMessage({ type: 'AIVSP_AUTHORIZE_IMAGE', ticket, imageUrl: image.currentSrc || image.src });
+        if (generation !== STATE.generation) return;
+        const messages = { IMAGE_AUTH_STALE: 'La selección caducó o cambió de página. Repite el atajo.',
+          IMAGE_AUTO_PERMISSION: 'Activa y confirma el permiso del automático en Opciones.',
+          IMAGE_URL: 'La imagen no usa un dominio HTTPS admitido.' };
+        showStatus(result?.ok ? (result.pending ? 'Confirma el dominio en Opciones; después podrás consultar la pregunta.' : 'Imagen autorizada. No se consultó IA.') :
+          messages[result?.error] || 'No se pudo autorizar esta imagen.', result?.ok ? 'success' : 'error', automatic ? 900 : 6500);
+      } catch { if (generation === STATE.generation) showStatus('No se pudo completar la autorización. Recarga la extensión.', 'error', 5000); }
+    };
+    const onKey = event => { if (event.key === 'Escape') {
+      cancelSelection(); STATE.generation++; STATE.statusElement?.remove();
+      chrome.runtime.sendMessage({ type: 'AIVSP_SELECTION_FINISHED' }).catch(() => {});
+    } };
+    document.addEventListener('click', onClick, true); document.addEventListener('keydown', onKey, true);
+    STATE.cleanupSelection = () => {
+      document.removeEventListener('click', onClick, true); document.removeEventListener('keydown', onKey, true);
+      document.documentElement.classList.remove('aivsp-selection-active'); STATE.cleanupSelection = null;
+    };
+  }
 
   function beginSelection(
     message = "AIVSP · clic en pregunta", matrixTestMode = false, allowBrowserImages = false, diagnosticMode = false) {
@@ -304,26 +339,14 @@ if (!globalThis.__aivspDomAssistantInstalled) {
       // Only a tainted canvas warrants an authorized CORS reload. Size/encoding
       // failures must retain their real cause and never trigger a network retry.
       if (error?.name !== 'SecurityError') throw error;
-      const image = new Image(); image.crossOrigin = 'anonymous';
-      image.src = element.currentSrc || element.src;
-      let timer;
-      try {
-        await Promise.race([image.decode(), new Promise((_, reject) => {
-          timer = setTimeout(() => reject(fail("IMAGE_LOAD_TIMEOUT", "La recarga autorizada de la imagen tardó más de 5 segundos.")), 5000);
-        })]);
-      } catch (loadError) {
-        image.removeAttribute('src');
-        if (loadError?.message?.includes('[IMAGE_LOAD_TIMEOUT]')) throw loadError;
-        let url;
-        try { url = new URL(element.currentSrc || element.src); } catch { /* Unsupported source keeps the CORS diagnostic. */ }
-        if (url?.origin === 'https://hive.forms.usercontent.microsoft') {
-          const result = await chrome.runtime.sendMessage({ type: 'AIVSP_FETCH_FORM_IMAGE', imagePath: url.pathname });
-          if (!result?.ok) {
-            const code = /^IMAGE_[A-Z0-9_]+$/.test(result?.error || '') ? result.error : 'IMAGE_DOWNLOAD_FAILED';
-            throw fail(code, code === 'IMAGE_HOST_PERMISSION'
-              ? 'En Opciones, pulsa Autorizar imágenes de Microsoft Forms y concede acceso al servidor.'
-              : 'La descarga autorizada de la imagen Forms no pudo completarse.');
-          }
+      let brokerFailure = null;
+      let url;
+      try { url = new URL(element.currentSrc || element.src); } catch { /* Keep the normal CORS diagnostic. */ }
+      if (url?.protocol === 'https:') {
+        // Try authorized bytes/cache first; don't repeat a failing anonymous GET
+        // for each question that shares a Forms/CDN image.
+        const result = await chrome.runtime.sendMessage({ type: 'AIVSP_FETCH_IMAGE', imageUrl: url.href });
+        if (result?.ok) {
           if (typeof result.dataUrl !== 'string' || result.dataUrl.length > 5600000 || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(result.dataUrl))
             throw fail('IMAGE_FORMAT', 'La extensión no recibió una imagen válida.');
           const downloaded = new Image(); downloaded.src = result.dataUrl;
@@ -333,6 +356,27 @@ if (!globalThis.__aivspDomAssistantInstalled) {
             throw fail('IMAGE_DECODE', 'La imagen descargada no pudo decodificarse.');
           } finally { downloaded.removeAttribute('src'); }
         }
+        const code = /^IMAGE_[A-Z0-9_]+$/.test(result?.error || '') ? result.error : 'IMAGE_DOWNLOAD_FAILED';
+        brokerFailure = fail(code, code === 'IMAGE_HOST_PERMISSION'
+          ? `En Opciones, autoriza el dominio de la imagen: ${url.origin}. Para Microsoft Forms también puedes usar su botón específico.`
+          : code === 'IMAGE_SHORTCUT_REQUIRED' ? 'Autoriza primero esta imagen con Ctrl+Shift+9 y clic sobre ella.'
+          : code === 'IMAGE_AUTO_PERMISSION' ? 'El modo automático necesita confirmación de su permiso en Opciones.'
+          : 'La descarga autorizada de la imagen no pudo completarse.');
+        // Do not bypass the broker's permission/redirect policy with another
+        // HTTPS Image request. Original already-readable pixels need no broker.
+        throw brokerFailure;
+      }
+      const image = new Image(); image.crossOrigin = 'anonymous';
+      image.src = element.currentSrc || element.src;
+      let timer;
+      try {
+        await Promise.race([image.decode(), new Promise((_, reject) => {
+          timer = setTimeout(() => reject(fail("IMAGE_LOAD_TIMEOUT", "La recarga autorizada de la imagen tardó más de 5 segundos.")), 5000);
+        })]);
+      } catch (loadError) {
+        image.removeAttribute('src');
+        if (brokerFailure) throw brokerFailure;
+        if (loadError?.message?.includes('[IMAGE_LOAD_TIMEOUT]')) throw loadError;
         throw fail("IMAGE_CORS_LOAD", "El navegador bloqueó la lectura de píxeles (CORS) y la recarga con permiso del servidor falló. Puede deberse a CORS, autenticación o carga del recurso.");
       } finally { clearTimeout(timer); }
       try { return draw(image); }

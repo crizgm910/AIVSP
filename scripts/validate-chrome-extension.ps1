@@ -12,6 +12,7 @@ $requiredFiles = @(
     'options.html',
     'options.js',
     'options.css'
+    'image-policy.js'
 )
 
 foreach ($file in $requiredFiles) {
@@ -47,13 +48,14 @@ if (-not $selectionCommand -or
 if ($manifest.commands.'_execute_action') {
     throw 'El atajo ambiguo _execute_action no debe estar presente.'
 }
-if ($manifest.version -ne '0.3.8') {
-    throw 'La versión esperada de la extensión es 0.3.8.'
+if ($manifest.version -ne '0.4.1') {
+    throw 'La versión esperada de la extensión es 0.4.1.'
 }
+if ($manifest.commands.'authorize-image'.suggested_key.default -ne 'Ctrl+Shift+9') { throw 'Falta el atajo independiente para autorización de imagen.' }
 $expectedOptionalHosts = @('https://forms.cloud.microsoft/*', 'https://forms.office.com/*',
-    'https://teams.microsoft.com/*', 'https://teams.cloud.microsoft/*', 'https://hive.forms.usercontent.microsoft/*')
+    'https://teams.microsoft.com/*', 'https://teams.cloud.microsoft/*', 'https://hive.forms.usercontent.microsoft/*', 'https://*/*')
 if (Compare-Object @($manifest.optional_host_permissions | Sort-Object) @($expectedOptionalHosts | Sort-Object)) {
-    throw 'Los permisos opcionales deben limitarse a Forms, Teams y su CDN de imágenes exacto.'
+    throw 'Los permisos HTTPS adicionales solo pueden declararse opcionales; no ampliar los obligatorios.'
 }
 
 $node = Get-Command node -ErrorAction SilentlyContinue
@@ -84,6 +86,10 @@ if ($LASTEXITCODE -ne 0) { throw 'Fallaron las regresiones de matrices.' }
 if ($LASTEXITCODE -ne 0) { throw 'Fallaron las regresiones de opciones.' }
 & $node.Source (Join-Path $root 'tests\chrome-extension-image-worker-harness.mjs')
 if ($LASTEXITCODE -ne 0) { throw 'Fallaron las protecciones de descarga de imágenes Forms.' }
+& $node.Source (Join-Path $root 'tests\chrome-extension-image-domains-harness.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Fallaron los permisos/política/caché de dominios de imagen.' }
+& $node.Source (Join-Path $root 'tests\chrome-extension-image-authorization-harness.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Falló la autorización exclusiva por atajo.' }
 $forbiddenPatterns = @(
     '<all_urls>',
     'externally_connectable',
@@ -113,7 +119,7 @@ $requiredSubtlePatterns = @(
     'result.confidence >= 0.75',
     '"AIVSP · revisa"',
     'if (!mayApply)',
-    'AIVSP_CONTENT_SCRIPT_VERSION = "0.3.8"',
+    'AIVSP_CONTENT_SCRIPT_VERSION = "0.4.1"',
     '__aivspDomAssistantController'
 )
 foreach ($pattern in $requiredSubtlePatterns) {

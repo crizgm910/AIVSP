@@ -2,6 +2,26 @@
 
 Estados: `Pendiente`, `En progreso`, `Bloqueada`, `Terminada`.
 
+## Plan: atajo de autorización y automático explícito — 2026-11-23
+
+- [x] Ctrl+Shift+9 arma selección de imagen exclusivamente para autorizar, nunca inferir.
+- [x] Sin automático: mensajes visibles y Opciones prellenadas para confirmar permiso exacto.
+- [x] Con automático: permiso HTTPS amplio inicial explícito; solo imagen elegida con atajo, sin avisos grandes.
+- [x] Ticket efímero de un uso por pestaña/marco; autorización de imagen en RAM acotada, no URLs persistidas.
+- [x] Consulta normal no crea autorizaciones; comprobar denegación, caducidad, revocación y cambio de contexto.
+- [x] Probar UX/regresiones y preparar extensión 0.4.1 sin cambiar app/token; 190 pruebas .NET aprobadas.
+- [ ] Comprobar diálogo Chrome y atajo real con ambos modos; Teams sigue pendiente.
+
+## Plan: imágenes de otros dominios HTTPS — 2026-11-23
+
+- [x] Política compartida de URLs: HTTPS, dominio exacto, sin credenciales/puertos especiales/IP literales ni nombres locales conocidos.
+- [x] Permiso opcional por dominio y registro independiente para imágenes; revocación sin afectar marcos Forms/Teams.
+- [x] Broker restringido por consentimiento, emisor, formato, tamaño, timeout y redirecciones; mantener ruta Forms.
+- [x] Caché pequeña en memoria por pestaña/documento con caducidad; respetar no-store y revocación.
+- [x] Probar rechazo/permiso/caché, experiencia de Opciones y regresiones completas; documentar límites. 190 pruebas .NET aprobadas.
+- [x] Preparar extensión 0.4.0 sin tocar captura/OCR/inferencia ni ejecutable.
+- [ ] Confirmar diálogo de permiso real y un dominio adicional; Teams real sigue pendiente.
+
 Confirmación registrada el 23 de noviembre de 2026: última prueba del usuario
 aprobada en Forms directo. Teams real y persistencia allí siguen pendientes.
 

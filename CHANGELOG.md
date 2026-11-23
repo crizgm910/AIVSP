@@ -7,6 +7,30 @@ con sufijo `alpha` o `beta` son preliminares y pueden contener defectos conocido
 
 ## [Sin publicar]
 
+- Extensión 0.4.1: atajo Ctrl+Shift+9 exclusivamente para autorización de imagen.
+  Sin automático, instrucciones visibles y Opciones prellenadas para confirmar el
+  dominio. Con automático, permiso HTTPS amplio inicial y solo la imagen elegida
+  con atajo; indicador pequeño, sin consultas IA ni descargas en esa acción.
+- Automático desactivado por defecto. Ticket aleatorio de un uso por pestaña/marco
+  (30 segundos); elecciones de imagen acotadas en RAM (32, máximo 20 minutos).
+  Las consultas normales no generan permisos. Revocación/contexto/caducidad bloquean
+  imágenes pendientes; apagar el modo retira el permiso amplio.
+- Pruebas de ticket, alcance exacto, ausencia de inferencia/descarga al autorizar,
+  UI manual/automática, activación/denegación/revocación y prellenado sin datos sensibles.
+
+- Extensión 0.4.0: dominios de imágenes HTTPS autorizados explícitamente en Opciones,
+  con permiso de Chrome exacto y registro independiente. Retirada de permisos sin
+  eliminar los necesarios para marcos Forms/Teams; mantiene el botón del CDN conocido.
+- Política compartida de URLs, sin credenciales/puertos especiales/IP literales ni
+  nombres locales conocidos. No comprueba resolución DNS privada; solo hosts de confianza.
+- Broker general conserva MIME/firma, 4 MiB, timeout y ausencia de cookies,
+  redirecciones y cabeceras de autenticación. El canvas legible mantiene su ruta rápida.
+- Caché solo en memoria, cuatro entradas/8 Mi caracteres, por pestaña/documento/URL,
+  hasta 30 segundos con frescura HTTP explícita. Respeta no-store/no-cache, revocación,
+  cierre de pestaña y agrupa descargas idénticas en curso. No cachea inferencia.
+- Pruebas de política/permisos/caché y opciones renderizadas, casos de dominio adicional
+  e imágenes legibles sin petición extra. Prueba de permiso real y Teams pendientes.
+
 - Extensión 0.3.8: contexto incluye query/hash de navegación para descartar respuestas
   de una asignación anterior con DOM conservado; excluye imágenes CSS ocultas de
   otras vistas, sin excluir estímulos visibles fuera de pantalla.

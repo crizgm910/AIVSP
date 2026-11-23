@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AIVSP DOM Assistant",
   "short_name": "AIVSP DOM",
-  "version": "0.3.8",
+  "version": "0.4.1",
   "description": "Permite elegir una pregunta con Ctrl+Shift+Y y clic izquierdo.",
   "minimum_chrome_version": "110",
   "permissions": [
@@ -19,7 +19,8 @@
     "https://forms.office.com/*",
     "https://teams.microsoft.com/*",
     "https://teams.cloud.microsoft/*",
-    "https://hive.forms.usercontent.microsoft/*"
+    "https://hive.forms.usercontent.microsoft/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "service-worker.js"
@@ -28,6 +29,10 @@
     "default_title": "Seleccionar pregunta para AIVSP"
   },
   "commands": {
+    "authorize-image": {
+      "suggested_key": { "default": "Ctrl+Shift+9" },
+      "description": "Elegir una imagen para autorizar (no consulta IA)"
+    },
     "select-question": {
       "suggested_key": {
         "default": "Ctrl+Shift+Y"

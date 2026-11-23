@@ -2,7 +2,7 @@
 
 ## Integración visual DOM — v0.3.0-alpha.2
 
-Extensión `0.3.8`: soporte inicial de casillas múltiples, listas HTML y desplegables
+Extensión `0.4.1`: soporte inicial de casillas múltiples, listas HTML y desplegables
 ARIA, imágenes propias y una imagen previa compartida por varias preguntas.
 Las consultas con imágenes o varias respuestas requieren **Antigravity CLI con ACP**
 (probado con agy 1.5.1 y Gemini 3.8 Flash). OCR y VLM de escritorio no cambian.
@@ -40,7 +40,19 @@ o generar una respuesta de texto. El modo VLM permanece deshabilitado.
 
 ## Estado
 
-Versión de prueba actual: `v0.3.0-alpha.2` (extensión en código `0.3.8`).
+Versión de prueba actual: `v0.3.0-alpha.2` (extensión en código `0.4.1`).
+
+Autorización de imágenes: **Ctrl+Shift+9 y clic en la imagen**, separado de resolver
+con Ctrl+Shift+Y. Sin automático: mensajes visibles y permiso manual por dominio.
+Con automático: permiso HTTPS amplio inicial explícito y luego autorización discreta
+solo de la imagen elegida con ese atajo. No autoriza imágenes al resolver preguntas.
+La elección automática es temporal en RAM. Misma app/token; detalles en README de extensión.
+
+Nueva extensión 0.4.0: en Opciones puedes autorizar dominios HTTPS adicionales para
+imágenes. Se pide acceso solo al host introducido, no a todos los sitios. Reutilización
+en memoria por hasta 30 segundos si el servidor permite caché; sin cookies ni
+redirecciones. No cambia ejecutable/token. Detalles y límites en `chrome-extension/README.md`.
+La validación física previa de Forms corresponde a 0.3.8; la nueva versión necesita prueba manual.
 
 Endurecimiento para Teams SPA: descarta respuestas si cambia query/fragmento de URL
 y evita tomar imágenes ocultas de otra vista. Se mantienen imágenes fuera de pantalla.

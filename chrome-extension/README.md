@@ -1,5 +1,97 @@
 # AIVSP DOM Assistant
 
+## Atajo de autorización: manual o automático discreto (0.4.1)
+
+**Ctrl+Shift+9**, después clic directamente sobre la imagen. Este atajo solo
+autoriza; no descarga la imagen, no llama a IA, no responde ni envía formularios.
+Para resolver después, sigue usando Ctrl+Shift+Y y clic en la pregunta.
+Si Chrome no asigna el nuevo atajo, configúralo en `chrome://extensions/shortcuts`.
+
+- **Automático apagado (predeterminado):** mensajes visibles y una pestaña Opciones
+  prellenada con el dominio, sin copiar enlaces. Pulsa **Autorizar este dominio** y
+  confirma el permiso de Chrome. El permiso manual cubre ese dominio.
+- **Automático activado:** Opciones → **Autorización automática discreta SOLO con
+  Ctrl+Shift+9**. Chrome solicita una vez acceso amplio a sitios HTTPS. Después,
+  atajo + clic autoriza exclusivamente la URL de imagen elegida en ese documento y
+  pestaña. Solo muestra un pequeño indicador, no mensajes grandes ni pestaña de
+  confirmación por imagen. No crea autorizaciones al consultar preguntas normales.
+
+El permiso amplio aumenta las capacidades de la extensión, no solo las de un host.
+El broker sigue bloqueando descargas no elegidas con el atajo, incluso si el permiso
+amplio o un registro manual existen. Los píxeles ya legibles en el documento conservan
+su flujo normal: no necesitan una nueva descarga/autorización. Adjuntar imágenes sigue
+requiriendo su propio consentimiento. Nunca se omiten políticas HTTPS/formato/tamaño.
+
+La elección automática es solo RAM: hasta 32 imágenes, hasta 20 minutos, asociadas a
+la URL exacta (incluida query), pestaña y documento. También se pierde si se reinicia
+el service worker o se retira permiso/consentimiento; basta repetir el atajo, sin
+volver a pedir un permiso amplio mientras siga vigente. Una imagen común elegida
+sirve para varias preguntas del mismo documento. No guarda URLs en disco.
+
+Un ticket aleatorio de un solo uso permite la elección durante 30 segundos y solo
+en los marcos donde el comando armó el selector. Cambiar página, caducar o reutilizar
+el ticket impide autorizar. Escape cancela. Las acciones de autorización no generan
+capturas, notificaciones de escritorio ni inferencias adicionales.
+
+Al apagar el automático se desactiva primero el uso automático y se retira el permiso
+amplio. Chrome puede exigir reconceder permisos específicos; el registro manual no
+se borra. Si un permiso se revoca fuera de la extensión, se exige confirmarlo otra vez.
+La nueva UI se probó con API Chrome simulada: falta verificar el diálogo y el atajo
+en el Chrome del usuario. Teams real sigue pendiente.
+
+## Dominios HTTPS de imágenes (0.4.0)
+
+La descarga autorizada ya no se limita al CDN de Forms. En Opciones → **Otros
+servidores de imágenes HTTPS**, introduce el dominio o pega una dirección directa
+de imagen y pulsa **Autorizar este dominio**. Chrome debe conceder acceso al host
+exacto. Solo se guarda el origen (esquema/dominio), no rutas ni query de enlaces.
+Mantén **Adjuntar imágenes** activado y guardado. No hace falta cambiar app ni token.
+
+El permiso HTTPS amplio se declara únicamente como opcional para poder pedir hosts
+descubiertos al usar la extensión. El modo manual no solicita todos los hosts;
+la opción automática 0.4.1 sí pide ese permiso amplio, solo al activarla. Forms/Teams
+siguen pidiendo solo sus cuatro orígenes. El CDN conocido conserva su botón y permiso.
+En modo manual cada otro dominio requiere además registro explícito de imágenes: tener acceso a una
+página para extraer DOM no autoriza por sí solo descargar imágenes de ese host.
+**Quitar autorización de imagen** retira el registro y el permiso cuando no es un
+origen necesario para los marcos Forms/Teams; esos permisos de marcos se conservan.
+
+La política admite HTTPS con dominios DNS, puerto estándar y sin usuario/contraseña.
+Rechaza HTTP para el broker, IP literales (incluidas variantes canónicas), nombres
+locales conocidos y comodines. No resuelve DNS ni detecta todos los alias que apuntan
+a redes privadas: autoriza solo servidores de confianza; no es un sandbox de red.
+No intenta iniciar sesión ni descargar con cookies. Las imágenes autenticadas,
+SVG/GIF del broker y redirecciones siguen sin admitirse; respuesta HTML no es imagen.
+Se mantienen JPEG/PNG/WebP con MIME/firma, máximo 4 MiB y diez segundos, sin cookies,
+token de AIVSP, referrer ni redirecciones. Los enlaces firmados conservan su query
+durante la descarga, nunca se escriben en logs ni en la configuración de dominios.
+
+Si el canvas ya puede leer los píxeles, no se añade descarga ni petición al broker.
+Si falla CORS en HTTPS, se consulta primero el broker autorizado; no se reintenta
+mediante Image para eludir una denegación. Por eso una imagen cacheada no repite
+primero la descarga anónima fallida. No cambia captura, OCR, inferencia ni autopegado.
+
+### Reutilización temporal y pruebas
+
+Hasta cuatro entradas y ocho millones de caracteres base64 aproximadamente (límite
+real 8×1024×1024), solo en memoria del service worker, separadas por pestaña,
+documento, URL del formulario y URL de imagen. Máximo 30 segundos o la frescura
+menor indicada por max-age/Age; sin max-age válido, no-cache, no-store o Vary:* no
+se almacena. Solicitudes iguales en curso comparten descarga. Revocar permisos o
+consentimiento limpia la caché; cerrar pestaña evita repoblarla con una carga pendiente.
+No se conserva en disco ni tras reiniciar el worker. No se cachean respuestas de IA.
+
+Probado: políticas URL/permisos/caché, revocación durante descarga, límites de memoria,
+TTL y peticiones idénticas; interfaz HTML con API Chrome simulada; carga de imagen de
+otro dominio, negativa y píxeles ya legibles sin peticiones extra. Scripts:
+`tests/chrome-extension-image-domains-harness.mjs`, `tests/browser-image-options.cjs`
+y `tests/browser-images.cjs`, integrados en `scripts/test-browser-regressions.ps1`.
+Falta probar el diálogo real de Chrome y un servidor adicional elegido por el usuario.
+Teams real sigue pendiente y no se promete que cualquier enlace sea compatible.
+
+Documentación de referencia: [permisos opcionales de Chrome](https://developer.chrome.com/docs/extensions/reference/api/permissions)
+y [peticiones de extensión entre orígenes](https://developer.chrome.com/docs/extensions/develop/concepts/network-requests).
+
 ## Endurecimiento SPA y vistas ocultas (0.3.8)
 
 La huella del contexto incluye query y fragmento de URL: una respuesta pendiente

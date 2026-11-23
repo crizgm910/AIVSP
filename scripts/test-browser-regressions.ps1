@@ -9,6 +9,8 @@ try {
     # Requires Playwright and the local fixture server (serve-forms-lab.mjs).
     # Does not attach to the user's browser or submit any form.
     foreach ($test in @(
+        'browser-image-options.cjs',
+        'browser-image-authorization.cjs',
         'browser-teams-safety.cjs',
         'browser-form-choices.cjs',
         'browser-images.cjs',

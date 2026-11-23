@@ -36,10 +36,29 @@
     </label>
     <p class="hint">Puede enviar a la nube la imagen propia o el bloque visual anterior asociado.
       No captura la pantalla completa. Si no puede leer la imagen, se cancela.</p>
+    <label class="checkbox">
+      <input id="auto-image-authorization" type="checkbox">
+      Autorización automática discreta SOLO con Ctrl+Shift+9 y clic en la imagen
+    </label>
+    <p class="hint">Apagado por defecto. Al activarlo Chrome pide acceso amplio a todos los sitios HTTPS.
+      AIVSP solo autoriza descargas de imágenes elegidas explícitamente con este atajo, no por detectar preguntas.
+      La selección dura hasta 20 minutos en esta pestaña/documento o hasta reiniciarse la extensión.
+      El atajo no consulta IA. Sin este modo, abre una confirmación visible por dominio.
+      Al apagarlo se retira el permiso amplio; puede ser necesario reconceder permisos específicos en Chrome.</p>
     <button id="enable-forms-images" type="button" class="secondary">Autorizar imágenes de Microsoft Forms</button>
     <p class="hint">Permiso opcional solo para hive.forms.usercontent.microsoft.
       Permite descargar la imagen seleccionada cuando el formulario bloquea la lectura por CORS.
       No envía cookies ni autoriza otros servidores. Adjuntar imágenes debe seguir activado.</p>
+    <label for="image-domain">Otros servidores de imágenes HTTPS</label>
+    <input id="image-domain" type="url" spellcheck="false" autocomplete="off" placeholder="https://imagenes.servidor.com">
+    <p class="hint">Puedes pegar una dirección de imagen: solo se guarda su dominio.
+      Autoriza únicamente servidores de confianza. No se admiten HTTP, IP literales ni nombres locales conocidos.
+      Un nombre público puede apuntar a una red privada; esta extensión no verifica su resolución DNS.</p>
+    <button id="authorize-image-domain" type="button" class="secondary">Autorizar este dominio</button>
+    <button id="revoke-image-domain" type="button" class="secondary">Quitar autorización de imagen</button>
+    <pre id="image-domains" aria-label="Dominios de imágenes autorizados"></pre>
+    <p class="hint">Solo JPEG, PNG y WebP, hasta 4 MiB. Sin cookies ni redirecciones.
+      La misma imagen puede reutilizarse en memoria hasta 30 segundos, sin guardarla en disco.</p>
     <label class="checkbox">
       <input id="matrix-test-mode" type="checkbox">
       PRUEBA de matrices: marcar siempre la primera opción de la fila (sin IA)
@@ -84,6 +103,7 @@
       </p>
     </section>
   </main>
+  <script src="image-policy.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

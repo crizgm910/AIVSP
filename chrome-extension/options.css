@@ -31,7 +31,8 @@ label:not(.checkbox) {
   font-weight: 700;
 }
 
-input[type="password"] {
+input[type="password"],
+input[type="url"] {
   box-sizing: border-box;
   width: 100%;
   padding: 10px 12px;
@@ -58,7 +59,7 @@ input[type="password"] {
   margin-top: 24px;
 }
 
-#matrix-diagnostics { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+#matrix-diagnostics, #image-domains { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
 
 button {
   padding: 10px 16px;

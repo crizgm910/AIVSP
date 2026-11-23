@@ -1,10 +1,50 @@
 "use strict";
+importScripts('image-policy.js');
 
 const BRIDGE_URL = "http://127.0.0.1:18791";
 const REQUEST_TIMEOUT_MS = 40000;
 let diagnosticWrites = Promise.resolve();
 const FORM_IMAGE_ORIGIN = 'https://hive.forms.usercontent.microsoft';
 let activeImageLoads = 0;
+const imageCache = new Map();
+const imageInFlight = new Map();
+const IMAGE_CACHE_TTL_MS = 30000;
+const IMAGE_CACHE_MAX_CHARS = 8 * 1024 * 1024;
+let imageCacheRevision = 0;
+const imageAuthorizationTickets = new Map();
+const selectedImageGrants = new Map();
+const imageContextKey = (sender, target) => sender.tab.id + '|' + JSON.stringify([sender.documentId || sender.frameId || 0, sender.url, target.url]);
+
+function clearImageCache() {
+  for (const value of imageCache.values()) clearTimeout(value.timer);
+  imageCache.clear(); selectedImageGrants.clear(); imageCacheRevision++;
+}
+
+function cacheImage(key, dataUrl, ttl) {
+  if (imageCache.has(key)) clearTimeout(imageCache.get(key).timer);
+  const expires = Date.now() + ttl;
+  const timer = setTimeout(() => {
+    if (imageCache.get(key)?.expires === expires) imageCache.delete(key);
+  }, ttl);
+  imageCache.set(key, { dataUrl, expires, timer });
+  let size = [...imageCache.values()].reduce((total, value) => total + value.dataUrl.length, 0);
+  while (imageCache.size > 4 || size > IMAGE_CACHE_MAX_CHARS) {
+    const oldest = imageCache.keys().next().value;
+    size -= imageCache.get(oldest).dataUrl.length; clearTimeout(imageCache.get(oldest).timer); imageCache.delete(oldest);
+  }
+}
+chrome.permissions?.onRemoved?.addListener(clearImageCache);
+chrome.storage.onChanged?.addListener((changes, area) => {
+  if (area === 'local' && (changes.allowBrowserImages || changes.imageOrigins || changes.autoImageAuthorization)) clearImageCache();
+});
+chrome.tabs?.onRemoved?.addListener(tabId => {
+  imageCacheRevision++;
+  imageAuthorizationTickets.delete(tabId);
+  for (const key of selectedImageGrants.keys()) if (key.startsWith(tabId + '|')) selectedImageGrants.delete(key);
+  for (const key of imageCache.keys()) if (key.startsWith(tabId + '|')) {
+    clearTimeout(imageCache.get(key).timer); imageCache.delete(key);
+  }
+});
 
 async function fetchFormImage(imagePath, sender) {
   let origin;
@@ -13,15 +53,57 @@ async function fetchFormImage(imagePath, sender) {
     'https://teams.microsoft.com', 'https://teams.cloud.microsoft'].includes(origin)) return { ok: false, error: 'IMAGE_SENDER' };
   if (typeof imagePath !== 'string' || imagePath.length > 2048 || !/^\/images\/[A-Za-z0-9_/-]+$/.test(imagePath))
     return { ok: false, error: 'IMAGE_PATH' };
-  const settings = await chrome.storage.local.get({ allowBrowserImages: false });
-  if (settings.allowBrowserImages !== true) return { ok: false, error: 'IMAGE_CONSENT' };
-  if (!await chrome.permissions.contains({ origins: [FORM_IMAGE_ORIGIN + '/*'] })) return { ok: false, error: 'IMAGE_HOST_PERMISSION' };
+  return fetchAuthorizedImage(FORM_IMAGE_ORIGIN + imagePath, sender, false);
+}
+
+async function fetchAuthorizedImage(imageUrl, sender, useCache = true) {
+  if (!Number.isInteger(sender.tab?.id) || !globalThis.AivspImagePolicy.parse(sender.url))
+    return { ok: false, error: 'IMAGE_SENDER' };
+  const target = globalThis.AivspImagePolicy.parse(imageUrl);
+  if (!target) return { ok: false, error: 'IMAGE_URL' };
+  if (target.origin === FORM_IMAGE_ORIGIN && !/^\/images\/[A-Za-z0-9_/-]+$/.test(new URL(target.url).pathname))
+    return { ok: false, error: 'IMAGE_PATH' };
+  const accessError = await imageAccessError(target, sender);
+  if (accessError) return { ok: false, error: accessError };
+  const key = imageContextKey(sender, target);
+  for (const [oldKey, value] of imageCache) if (value.expires <= Date.now()) { clearTimeout(value.timer); imageCache.delete(oldKey); }
+  if (useCache && imageCache.has(key)) {
+    const value = imageCache.get(key); imageCache.delete(key); imageCache.set(key, value);
+    return { ok: true, dataUrl: value.dataUrl };
+  }
+  const existing = useCache && imageInFlight.get(key);
+  const load = existing || downloadImage(target, useCache ? key : null);
+  if (useCache && !existing) imageInFlight.set(key, load);
+  try {
+    const result = await load;
+    const revoked = await imageAccessError(target, sender);
+    if (revoked) { clearImageCache(); return { ok: false, error: revoked }; }
+    return result;
+  } finally { if (useCache && !existing) imageInFlight.delete(key); }
+}
+
+async function imageAccessError(target, sender) {
+  const settings = await chrome.storage.local.get({ allowBrowserImages: false, imageOrigins: [], autoImageAuthorization: false });
+  if (settings.allowBrowserImages !== true) return 'IMAGE_CONSENT';
+  if (settings.autoImageAuthorization === true) {
+    if (!await chrome.permissions.contains({ origins: ['https://*/*'] })) return 'IMAGE_AUTO_PERMISSION';
+    const key = imageContextKey(sender, target);
+    if ((selectedImageGrants.get(key) || 0) <= Date.now()) { selectedImageGrants.delete(key); return 'IMAGE_SHORTCUT_REQUIRED'; }
+    return null;
+  }
+  if ((target.origin !== FORM_IMAGE_ORIGIN && (!Array.isArray(settings.imageOrigins) || !settings.imageOrigins.includes(target.origin))) ||
+      !await chrome.permissions.contains({ origins: [target.pattern] })) return 'IMAGE_HOST_PERMISSION';
+  return null;
+}
+
+async function downloadImage(target, cacheKey) {
   if (activeImageLoads >= 4) return { ok: false, error: 'IMAGE_BUSY' };
   activeImageLoads++;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 10000);
+  const cacheRevision = imageCacheRevision;
   try {
-    const response = await fetch(FORM_IMAGE_ORIGIN + imagePath, {
+    const response = await fetch(target.url, {
       credentials: 'omit', redirect: 'error', cache: 'no-store', referrerPolicy: 'no-referrer', signal: controller.signal
     });
     if (!response.ok) return { ok: false, error: 'IMAGE_HTTP_' + response.status };
@@ -48,7 +130,14 @@ async function fetchFormImage(imagePath, sender) {
     if (!signature) return { ok: false, error: 'IMAGE_FORMAT' };
     let binary = '';
     for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
-    return { ok: true, dataUrl: `data:${mime};base64,${btoa(binary)}` };
+    const dataUrl = `data:${mime};base64,${btoa(binary)}`;
+    const directives = response.headers.get('cache-control') || '';
+    const maxAge = Number(directives.match(/(?:^|,)\s*max-age\s*=\s*"?(\d+)/i)?.[1] || 0);
+    const age = Math.max(0, Number(response.headers.get('age')) || 0);
+    const ttl = Math.min(IMAGE_CACHE_TTL_MS, (maxAge - age) * 1000);
+    if (cacheKey && cacheRevision === imageCacheRevision && ttl > 0 &&
+        !/(?:no-store|no-cache)/i.test(directives) && response.headers.get('vary') !== '*') cacheImage(cacheKey, dataUrl, ttl);
+    return { ok: true, dataUrl };
   } catch (error) { return { ok: false, error: error?.name === 'AbortError' ? 'IMAGE_DOWNLOAD_TIMEOUT' : 'IMAGE_DOWNLOAD_FAILED' }; }
   finally { controller.abort(); clearTimeout(timer); activeImageLoads--; }
 }
@@ -58,7 +147,7 @@ chrome.action.onClicked.addListener(async (tab) => {
 });
 
 chrome.commands.onCommand.addListener(async (command) => {
-  if (command !== "select-question") {
+  if (!['select-question', 'authorize-image'].includes(command)) {
     return;
   }
 
@@ -66,8 +155,50 @@ chrome.commands.onCommand.addListener(async (command) => {
     active: true,
     currentWindow: true
   });
-  await armSelection(tabs[0]);
+  if (command === 'authorize-image') await armImageAuthorization(tabs[0]);
+  else await armSelection(tabs[0]);
 });
+
+async function armImageAuthorization(tab) {
+  if (!Number.isInteger(tab?.id)) return;
+  const settings = await chrome.storage.local.get({ autoImageAuthorization: false });
+  const ticket = { id: crypto.randomUUID(), expires: Date.now() + 30000, frames: new Map(), automatic: settings.autoImageAuthorization === true };
+  for (const [id, old] of imageAuthorizationTickets) if (old.expires <= Date.now()) imageAuthorizationTickets.delete(id);
+  if (imageAuthorizationTickets.size >= 32) imageAuthorizationTickets.delete(imageAuthorizationTickets.keys().next().value);
+  imageAuthorizationTickets.set(tab.id, ticket);
+  try {
+    const knownFrames = await chrome.webNavigation.getAllFrames({ tabId: tab.id });
+    const frames = knownFrames?.length ? knownFrames : [{ frameId: 0 }];
+    const results = await Promise.allSettled(frames.slice(0, 64).map(async frame => {
+      await chrome.scripting.executeScript({ target: { tabId: tab.id, frameIds: [frame.frameId] }, files: ['content-script.js'] });
+      ticket.frames.set(frame.frameId, { url: frame.url, documentId: frame.documentId });
+      await chrome.tabs.sendMessage(tab.id, { type: 'AIVSP_BEGIN_IMAGE_AUTHORIZATION', ticket: ticket.id, automatic: ticket.automatic }, { frameId: frame.frameId });
+    }));
+    if (!results.some(result => result.status === 'fulfilled')) { imageAuthorizationTickets.delete(tab.id); await setBadge(tab.id, '!', '#b91c1c'); }
+  } catch { imageAuthorizationTickets.delete(tab.id); await setBadge(tab.id, '!', '#b91c1c'); }
+}
+
+async function authorizeSelectedImage(message, sender) {
+  const ticket = imageAuthorizationTickets.get(sender.tab?.id);
+  const frame = ticket?.frames.get(sender.frameId || 0);
+  if (!ticket || ticket.id !== message.ticket || ticket.expires <= Date.now() || !frame ||
+      (frame.url && frame.url !== sender.url) || (frame.documentId && frame.documentId !== sender.documentId))
+    return { ok: false, error: 'IMAGE_AUTH_STALE' };
+  imageAuthorizationTickets.delete(sender.tab.id); // One image click per shortcut.
+  const target = globalThis.AivspImagePolicy.parse(message.imageUrl);
+  if (!target || !globalThis.AivspImagePolicy.parse(sender.url)) return { ok: false, error: 'IMAGE_URL' };
+  const settings = await chrome.storage.local.get({ autoImageAuthorization: false });
+  if (ticket.automatic) {
+    if (settings.autoImageAuthorization !== true || !await chrome.permissions.contains({ origins: ['https://*/*'] }))
+      return { ok: false, error: 'IMAGE_AUTO_PERMISSION' };
+    for (const [key, expiry] of selectedImageGrants) if (expiry <= Date.now()) selectedImageGrants.delete(key);
+    if (selectedImageGrants.size >= 32) selectedImageGrants.delete(selectedImageGrants.keys().next().value);
+    selectedImageGrants.set(imageContextKey(sender, target), Date.now() + 20 * 60 * 1000);
+    return { ok: true };
+  }
+  await chrome.tabs.create({ url: chrome.runtime.getURL('options.html') + '#image-origin=' + encodeURIComponent(target.origin) });
+  return { ok: true, pending: true };
+}
 
 async function armSelection(tab) {
   if (!Number.isInteger(tab?.id)) {
@@ -114,6 +245,14 @@ async function armSelection(tab) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === 'AIVSP_AUTHORIZE_IMAGE') {
+    authorizeSelectedImage(message, sender).then(sendResponse).catch(() => sendResponse({ ok: false, error: 'IMAGE_AUTH_FAILED' }));
+    return true;
+  }
+  if (message?.type === 'AIVSP_FETCH_IMAGE') {
+    fetchAuthorizedImage(message.imageUrl, sender).then(sendResponse).catch(() => sendResponse({ ok: false, error: 'IMAGE_DOWNLOAD_FAILED' }));
+    return true;
+  }
   if (message?.type === 'AIVSP_FETCH_FORM_IMAGE') {
     fetchFormImage(message.imagePath, sender).then(sendResponse).catch(() => sendResponse({ ok: false, error: 'IMAGE_DOWNLOAD_FAILED' }));
     return true;

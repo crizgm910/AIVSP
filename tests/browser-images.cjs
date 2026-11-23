@@ -16,10 +16,10 @@ const listen = server => new Promise(resolve => server.listen(0, '127.0.0.1', re
   const pages = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     const cross = req.url.includes('cross');
-    const src = req.url.includes('cdn-') ? 'https://hive.forms.usercontent.microsoft/images/test/one' : cross
+    const src = req.url.includes('domain-') ? 'https://pictures.example.net/photo.png?signature=synthetic' : req.url.includes('cdn-') ? 'https://hive.forms.usercontent.microsoft/images/test/one' : cross
       ? imageOrigin + (req.url.includes('allow') || req.url.includes('cancel') ? '/allow.svg' : '/blocked.svg')
       : 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64');
-    res.end(`<section data-automation-id="questionItem"><h2>Observa la imagen y describe el color del círculo.</h2><img width="160" height="120" src="${src}"><textarea></textarea></section>`);
+    res.end(`<section data-automation-id="questionItem"><h2>Observa la imagen y describe el color del círculo.</h2><img ${req.url.includes('domain-anonymous') ? 'crossorigin="anonymous"' : ''} width="160" height="120" src="${src}"><textarea></textarea></section>`);
   });
   await listen(pages);
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -27,6 +27,11 @@ const listen = server => new Promise(resolve => server.listen(0, '127.0.0.1', re
     async function run(kind, expected) {
       const page = await browser.newPage();
       try {
+        let imageRequests = 0;
+        if (kind.startsWith('domain-')) await page.route('https://pictures.example.net/**', route => {
+          imageRequests++;
+          return route.fulfill({ contentType: 'image/svg+xml', headers: { 'access-control-allow-origin': ['domain-cors', 'domain-anonymous'].includes(kind) ? '*' : 'https://not-allowed.invalid' }, body: svg });
+        });
         if (kind.startsWith('cdn-')) await page.route('https://hive.forms.usercontent.microsoft/images/test/one', route => route.fulfill({
           contentType: 'image/svg+xml', headers: { 'access-control-allow-origin': 'https://not-allowed.invalid' }, body: svg
         }));
@@ -55,9 +60,10 @@ const listen = server => new Promise(resolve => server.listen(0, '127.0.0.1', re
           globalThis.chrome = { runtime: {
             onMessage: { addListener(fn) { globalThis.arm = fn; }, removeListener() {} },
             async sendMessage(message) {
-              if (message.type === 'AIVSP_FETCH_FORM_IMAGE') {
-                globalThis.brokerCalls++; globalThis.brokerPath = message.imagePath;
-                if (kind === 'cdn-denied') return { ok: false, error: 'IMAGE_HOST_PERMISSION' };
+              if (message.type === 'AIVSP_FETCH_IMAGE') {
+                globalThis.brokerCalls++; globalThis.brokerUrl = message.imageUrl; globalThis.brokerPath = new URL(message.imageUrl).pathname;
+                if (kind === 'cdn-denied' || kind === 'domain-denied' || kind === 'domain-cors') return { ok: false, error: 'IMAGE_HOST_PERMISSION' };
+                if (kind === 'domain-reject') return { ok: false, error: 'IMAGE_URL' };
                 if (kind === 'cdn-invalid') return { ok: true, dataUrl: 'not an image' };
                 return { ok: true, dataUrl: brokerData };
               }
@@ -95,7 +101,14 @@ const listen = server => new Promise(resolve => server.listen(0, '127.0.0.1', re
         if (kind.startsWith('cdn-')) {
           assert.equal(await page.evaluate(() => brokerCalls), 1);
           assert.equal(await page.evaluate(() => brokerPath), '/images/test/one');
-        } else assert.equal(await page.evaluate(() => brokerCalls), 0, 'Never ask broker to access unrelated domains');
+        } else if (kind.startsWith('domain-')) {
+          if (kind === 'domain-anonymous') assert.equal(await page.evaluate(() => brokerCalls), 0, 'Already-readable pixels need no extra request');
+          else {
+            assert.equal(await page.evaluate(() => brokerCalls), 1);
+            assert.equal(await page.evaluate(() => brokerUrl), 'https://pictures.example.net/photo.png?signature=synthetic');
+          }
+          assert.equal(imageRequests, 1, 'No redundant anonymous download or permission bypass');
+        } else assert.equal(await page.evaluate(() => brokerCalls), 0, 'No broker needed for local/HTTP canvas fixtures');
         console.log(`PASS image ${kind}: ${expected || 'encoded safely'}`);
       } finally { await page.close(); }
     }
@@ -112,5 +125,10 @@ const listen = server => new Promise(resolve => server.listen(0, '127.0.0.1', re
     await run('cdn-denied', 'IMAGE_HOST_PERMISSION');
     await run('cdn-allowed');
     await run('cdn-invalid', 'IMAGE_FORMAT');
+    await run('domain-allowed');
+    await run('domain-denied', 'IMAGE_HOST_PERMISSION');
+    await run('domain-cors', 'IMAGE_HOST_PERMISSION');
+    await run('domain-anonymous');
+    await run('domain-reject', 'IMAGE_URL');
   } finally { await browser.close(); await Promise.all([new Promise(r => pages.close(r)), new Promise(r => images.close(r))]); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
