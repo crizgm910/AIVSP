@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const AIVSP_CONTENT_SCRIPT_VERSION = "0.2.12";
+const AIVSP_CONTENT_SCRIPT_VERSION = "0.3.8";
 const previousAivspController = globalThis.__aivspDomAssistantController;
 if (previousAivspController?.version !== AIVSP_CONTENT_SCRIPT_VERSION) {
   previousAivspController?.dispose?.();
@@ -21,7 +21,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
 
   const onRuntimeMessage = (message) => {
     if (message?.type === "AIVSP_BEGIN_SELECTION") {
-      beginSelection(undefined, message.matrixTestMode === true);
+      beginSelection(undefined, message.matrixTestMode === true, message.allowBrowserImages === true, message.diagnosticMode === true);
     } else if (message?.type === "AIVSP_CANCEL_SELECTION" && STATE.cleanupSelection) {
       cancelSelection();
       STATE.statusElement?.remove();
@@ -30,10 +30,10 @@ if (!globalThis.__aivspDomAssistantInstalled) {
   chrome.runtime.onMessage.addListener(onRuntimeMessage);
 
   function beginSelection(
-    message = "AIVSP · clic en pregunta", matrixTestMode = false) {
+    message = "AIVSP · clic en pregunta", matrixTestMode = false, allowBrowserImages = false, diagnosticMode = false) {
     STATE.generation++;
     STATE.activeContext = null;
-    STATE.testDiagnostics = matrixTestMode === true;
+    STATE.testDiagnostics = matrixTestMode === true || diagnosticMode === true;
     cancelSelection();
     clearPreviousResult();
     showStatus(matrixTestMode ? "PRUEBA: haz clic en una fila de matriz; se marcará su primera opción sin IA." : message, "selection", 0);
@@ -49,7 +49,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
       chrome.runtime.sendMessage({ type: "AIVSP_SELECTION_FINISHED" }).catch(() => {});
 
       try {
-        await processTarget(target, matrixTestMode);
+        await processTarget(target, matrixTestMode, allowBrowserImages);
       } catch (error) {
         if (generation !== STATE.generation) return;
         if (matrixTestMode) reportTest("extraction_failed", target);
@@ -77,10 +77,13 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     };
   }
 
-  async function processTarget(target, matrixTestMode = false) {
+  async function processTarget(target, matrixTestMode = false, allowBrowserImages = false) {
     const generation = STATE.generation;
     if (matrixTestMode) reportTest("target_clicked", target);
-    const context = extractContext(target);
+    const candidateRoot = findQuestionRoot(target) || (target && findBestRoot(target));
+    const dropdown = dropdownTrigger(candidateRoot) ? await prepareDropdown(candidateRoot, generation) : null;
+    if (generation !== STATE.generation) return;
+    const context = extractContext(target, dropdown);
     STATE.activeContext = context;
     if (matrixTestMode && !context.isMatrix) {
       reportTest("matrix_missing", target);
@@ -107,12 +110,21 @@ if (!globalThis.__aivspDomAssistantInstalled) {
       showStatus("Matriz reconocida. Esta valoración requiere revisar el trabajo; no se seleccionará una calificación automáticamente.", "warning", 6500);
       return;
     }
+    const images = findQuestionImages(context.root);
+    const needsImage = /imagen|diagrama|gráfic[ao]|cuadrícula|figura/i.test(context.payload.question);
+    if (needsImage && !images.length) throw new Error("La pregunta necesita una imagen, pero no se encontró un estímulo inequívoco. No se enviará solo texto.");
+    if (images.length) {
+      if (!allowBrowserImages) throw new Error("Activa Adjuntar imágenes en las opciones de la extensión para resolver esta pregunta visual.");
+      context.imageSources = images.map(element => ({ element, source: element.currentSrc || element.src }));
+      context.payload.images = await Promise.all(images.map(encodeImage));
+      if (generation !== STATE.generation) return;
+    }
     showStatus("AIVSP · procesando", "processing", 0);
     const response = await chrome.runtime.sendMessage({
       type: "AIVSP_ASSIST_REQUEST",
       payload: context.payload
     });
-    if (generation === STATE.generation) applyResponse(response, context);
+    if (generation === STATE.generation) await applyResponse(response, context);
   }
 
   function cancelSelection() {
@@ -130,21 +142,75 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     } }).catch(() => {});
   }
 
-  function extractContext(target) {
+  function dropdownTrigger(root) {
+    if (!root) return null;
+    return root.querySelector('[role="combobox"]') ||
+      root.querySelector('[aria-haspopup="listbox"]') ||
+      root.querySelector('[role="listbox"]') ||
+      root.querySelector('[data-automation-id="dropdown"]');
+  }
+
+  function linkedPopup(combo) {
+    const ids = `${combo.getAttribute("aria-controls") || ""} ${combo.getAttribute("aria-owns") || ""}`.trim().split(/\s+/);
+    const linked = ids.map(id => document.getElementById(id)).filter(Boolean);
+    const labelled = combo.id ? Array.from(document.querySelectorAll('[role="listbox"][aria-labelledby]'))
+      .filter(node => (node.getAttribute("aria-labelledby") || "").split(/\s+/).includes(combo.id)) : [];
+    const candidates = [...new Set([...linked, ...labelled])].filter(isVisible);
+    if (candidates.length > 1) throw new Error("Hay varios menús asociados al desplegable. No se elegirán opciones ambiguas.");
+    return candidates[0] || null;
+  }
+
+  async function prepareDropdown(root, generation) {
+    const combo = dropdownTrigger(root);
+    if (!combo || root.querySelector('select')) return null;
+    const triggers = visibleElements(root.querySelectorAll('[role="combobox"], [aria-haspopup="listbox"], [role="listbox"], [data-automation-id="dropdown"]'));
+    if (triggers.filter(node => !triggers.some(other => other !== node && other.contains(node))).length > 1)
+      throw new Error("Hay varios desplegables en este contenedor. Selecciona una pregunta con un solo campo.");
+    if (combo.disabled || combo.getAttribute("aria-disabled") === "true") throw new Error("El desplegable está deshabilitado.");
+    const optionsIn = node => node ? visibleElements(node.querySelectorAll('[role="option"]')) : [];
+    let popup = linkedPopup(combo);
+    if (optionsIn(popup || combo).length >= 2) return { combo, popup: popup || combo };
+    const before = new Set(visibleElements(document.querySelectorAll('[role="listbox"]')));
+    if (combo.getAttribute("aria-expanded") !== "true") combo.click();
+    // Forms can mount an asynchronously rendered popup outside the question card.
+    for (let attempt = 0; attempt < 40; attempt++) {
+      if (generation !== STATE.generation) return null;
+      if (!root.isConnected || !combo.isConnected) throw new Error("La pregunta cambió al abrir el desplegable.");
+      popup = linkedPopup(combo);
+      if (optionsIn(popup || combo).length >= 2) return { combo, popup: popup || combo };
+      const local = optionsIn(root);
+      if (local.length >= 2 && !popup) return { combo, popup: root };
+      const appeared = visibleElements(document.querySelectorAll('[role="listbox"]'))
+        .filter(node => !before.has(node) && optionsIn(node).length >= 2);
+      if (appeared.length > 1) throw new Error("Aparecieron varios menús. No se pueden asociar opciones con seguridad.");
+      if (!popup && appeared.length === 1) return { combo, popup: appeared[0] };
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    throw new Error("Se detectó el desplegable, pero no se pudieron leer sus opciones. Abre el menú y vuelve a seleccionar la pregunta.");
+  }
+
+  function extractContext(target, dropdown = null) {
     if (!target) {
       throw new Error("No se encontró el elemento seleccionado.");
     }
 
     const matrix = extractMatrix(target);
-    const root = matrix?.root || findBestRoot(target);
+    const root = matrix?.root || findQuestionRoot(target) || findBestRoot(target);
     if (!root) {
       throw new Error("No se reconoció un contenedor de pregunta.");
     }
 
-    const radios = matrix?.radios || usableRadios(root).slice(0, 12);
-    const input = matrix ? null : findAnswerInput(root, target);
+    const select = root.querySelector('select');
+    const combo = dropdown?.combo || dropdownTrigger(root);
+    const popup = dropdown?.popup || (combo && linkedPopup(combo));
+    const checkboxes = distinctChoices(Array.from(root.querySelectorAll('input[type="checkbox"], [role="checkbox"]')).filter(isUsableChoice));
+    const selectionKind = select ? "select" : combo ? "combobox" : checkboxes.length >= 2 ? "checkbox" : "radio";
+    const radios = matrix?.radios || (select ? Array.from(select.options).filter(option => option.value && !option.disabled) : combo ?
+      visibleElements((popup || root).querySelectorAll('[role="option"]')) : checkboxes.length >= 2 ? checkboxes : usableRadios(root));
+    if (radios.length > 12) throw new Error("La pregunta contiene demasiadas opciones.");
+    const input = matrix || radios.length >= 2 ? null : findAnswerInput(root, target);
     const options = matrix?.options || (radios.length >= 2
-      ? radios.map((radio, index) => extractOption(root, radio, index))
+      ? radios.map((radio, index) => ({ key: String.fromCharCode(65 + index), text: select || combo ? normalizedText(radio.textContent || radio.innerText) : extractOption(root, radio, index).text }))
       : []);
     const mode = options.length >= 2 ? 1 : input ? 2 : 0;
     if (mode === 0) {
@@ -163,6 +229,10 @@ if (!globalThis.__aivspDomAssistantInstalled) {
       input,
       requiresEvidence: matrix?.requiresEvidence === true,
       isMatrix: !!matrix,
+      selectionKind, select, combo,
+      popup,
+      selectionSnapshot: radios.map(control => ({ control, checked: control.checked === true || control.selected === true || control.getAttribute("aria-checked") === "true" || control.getAttribute("aria-selected") === "true", text: normalizedText(control.textContent || control.innerText) })),
+      originalInputValue: input ? (input.value ?? input.textContent) : null,
       optionElements: new Map(options.map((option, index) => [
         option.key.toUpperCase(),
         radios[index]
@@ -172,6 +242,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
         contextId,
         mode,
         question,
+        multipleAnswers: selectionKind === "checkbox" || select?.multiple === true || popup?.getAttribute("aria-multiselectable") === "true",
         options: options.map(({ key, text }) => ({ key, text })),
         inputPlaceholder:
           input?.getAttribute("placeholder") ||
@@ -179,6 +250,97 @@ if (!globalThis.__aivspDomAssistantInstalled) {
           null
       }
     };
+  }
+
+  function findQuestionRoot(target) {
+    return target?.closest?.('[data-automation-id="questionItem"]') ||
+      target?.closest?.('[data-question], .question-card, .card, fieldset') || null;
+  }
+
+  function findQuestionImages(root) {
+    const eligible = element => element.isConnected && isVisible(element) && element.naturalWidth >= 80 && element.naturalHeight >= 50;
+    const own = Array.from(root.querySelectorAll('img')).filter(eligible);
+    if (own.length > 2) throw new Error("Hay varias imágenes posibles. Selecciona una pregunta con contexto inequívoco.");
+    if (own.length) return own;
+    // Only preceding stimulus-only blocks in this question list, never arbitrary page logos.
+    let anchor = root.closest?.('.case') || root;
+    for (let level = 0; anchor && level < 2; level++, anchor = anchor.parentElement) {
+      let previous = anchor.previousElementSibling;
+      for (let count = 0; previous && count < 12; count++, previous = previous.previousElementSibling) {
+        const found = Array.from(previous.querySelectorAll('img')).filter(eligible);
+        if (!found.length) continue;
+        const controls = previous.querySelectorAll('input, textarea, select, [role="combobox"], [role="radio"], [role="checkbox"], [contenteditable="true"]');
+        if (controls.length) return []; // An image owned by another question is not shared by default.
+        if (found.length > 2) throw new Error("La imagen anterior es ambigua; no se seleccionará automáticamente.");
+        return found;
+      }
+      if (anchor.parentElement === document.body) break;
+    }
+    return [];
+  }
+
+  async function encodeImage(element) {
+    const fail = (code, message) => new Error(`${message} [${code}] No se enviará la consulta sin la imagen.`);
+    const draw = source => {
+      if (!source.naturalWidth || !source.naturalHeight)
+        throw fail("IMAGE_NOT_READY", "La imagen no terminó de cargar o no puede decodificarse.");
+      const scale = Math.min(1, 1280 / Math.max(source.naturalWidth, source.naturalHeight));
+      const canvas = document.createElement('canvas');
+      for (const [reduction, quality] of [[1, 0.88], [1, 0.72], [0.75, 0.72], [0.5, 0.72]]) {
+        canvas.width = Math.max(1, Math.round(source.naturalWidth * scale * reduction));
+        canvas.height = Math.max(1, Math.round(source.naturalHeight * scale * reduction));
+        const context = canvas.getContext('2d');
+        if (!context) throw fail("IMAGE_CANVAS", "El navegador no pudo crear el lector de imágenes.");
+        context.drawImage(source, 0, 0, canvas.width, canvas.height);
+        const encoded = canvas.toDataURL('image/jpeg', quality);
+        if (!encoded.startsWith('data:image/jpeg;base64,')) throw fail("IMAGE_ENCODING", "El navegador no pudo convertir la imagen a JPEG.");
+        const data = encoded.split(',')[1];
+        if (data && data.length <= 700000) return { mimeType: 'image/jpeg', data };
+      }
+      throw fail("IMAGE_TOO_LARGE", "La imagen supera el límite incluso después de reducirla.");
+    };
+    try { return draw(element); }
+    catch (error) {
+      // Only a tainted canvas warrants an authorized CORS reload. Size/encoding
+      // failures must retain their real cause and never trigger a network retry.
+      if (error?.name !== 'SecurityError') throw error;
+      const image = new Image(); image.crossOrigin = 'anonymous';
+      image.src = element.currentSrc || element.src;
+      let timer;
+      try {
+        await Promise.race([image.decode(), new Promise((_, reject) => {
+          timer = setTimeout(() => reject(fail("IMAGE_LOAD_TIMEOUT", "La recarga autorizada de la imagen tardó más de 5 segundos.")), 5000);
+        })]);
+      } catch (loadError) {
+        image.removeAttribute('src');
+        if (loadError?.message?.includes('[IMAGE_LOAD_TIMEOUT]')) throw loadError;
+        let url;
+        try { url = new URL(element.currentSrc || element.src); } catch { /* Unsupported source keeps the CORS diagnostic. */ }
+        if (url?.origin === 'https://hive.forms.usercontent.microsoft') {
+          const result = await chrome.runtime.sendMessage({ type: 'AIVSP_FETCH_FORM_IMAGE', imagePath: url.pathname });
+          if (!result?.ok) {
+            const code = /^IMAGE_[A-Z0-9_]+$/.test(result?.error || '') ? result.error : 'IMAGE_DOWNLOAD_FAILED';
+            throw fail(code, code === 'IMAGE_HOST_PERMISSION'
+              ? 'En Opciones, pulsa Autorizar imágenes de Microsoft Forms y concede acceso al servidor.'
+              : 'La descarga autorizada de la imagen Forms no pudo completarse.');
+          }
+          if (typeof result.dataUrl !== 'string' || result.dataUrl.length > 5600000 || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(result.dataUrl))
+            throw fail('IMAGE_FORMAT', 'La extensión no recibió una imagen válida.');
+          const downloaded = new Image(); downloaded.src = result.dataUrl;
+          try { await downloaded.decode(); return draw(downloaded); }
+          catch (decodeError) {
+            if (decodeError?.message?.includes('[IMAGE_')) throw decodeError;
+            throw fail('IMAGE_DECODE', 'La imagen descargada no pudo decodificarse.');
+          } finally { downloaded.removeAttribute('src'); }
+        }
+        throw fail("IMAGE_CORS_LOAD", "El navegador bloqueó la lectura de píxeles (CORS) y la recarga con permiso del servidor falló. Puede deberse a CORS, autenticación o carga del recurso.");
+      } finally { clearTimeout(timer); }
+      try { return draw(image); }
+      catch (retryError) {
+        if (retryError?.name === 'SecurityError') throw fail("IMAGE_CORS_READ", "El servidor no autorizó leer los píxeles de esta imagen (CORS).");
+        throw retryError;
+      } finally { image.removeAttribute('src'); }
+    }
   }
 
   function findBestRoot(target) {
@@ -195,10 +357,12 @@ if (!globalThis.__aivspDomAssistantInstalled) {
         continue;
       }
       const radioCount = usableRadios(element).length;
+      const dropdownCount = visibleElements(element.querySelectorAll('select, [role="combobox"], [role="listbox"], [aria-haspopup="listbox"]')).length;
       const inputCount = visibleElements(
         element.querySelectorAll(
           'textarea, input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]):not([type="submit"]):not([type="button"]), [contenteditable="true"], [role="textbox"]')).length;
       let score = 0;
+      if (dropdownCount === 1) score += 125;
       if (radioCount >= 2 && radioCount <= 12) {
         score += 200 - (radioCount * 2);
       }
@@ -236,6 +400,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
         const tables = visibleElements(parent.querySelectorAll(tableSelector));
         if (tables.length === 1) { table = tables[0]; break; }
         if (tables.length > 1) break;
+        if (parent === findQuestionRoot(target)) break;
       }
     }
     if (!table) return null;
@@ -292,8 +457,12 @@ if (!globalThis.__aivspDomAssistantInstalled) {
   function extractOption(root, radio, index) {
     const label = Array.from(radio.labels || [])
       .find((candidate) => root.contains(candidate));
+    const linkedText = String(radio.getAttribute('aria-labelledby') || '').split(/\s+/)
+      .map(id => document.getElementById(id)).filter(element => element && root.contains(element))
+      .map(element => normalizedText(element.innerText || element.textContent)).filter(Boolean).join(' ');
     const text = normalizedText(
       label?.innerText ||
+      linkedText ||
       radio.getAttribute("aria-label") ||
       radio.innerText ||
       radio.getAttribute("data-value") ||
@@ -315,14 +484,18 @@ if (!globalThis.__aivspDomAssistantInstalled) {
 
   function findAnswerInput(root, target) {
     const selector =
-      'textarea, input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]):not([type="submit"]):not([type="button"]), [contenteditable="true"], [role="textbox"]';
+      'textarea, input[type="text"], input:not([type]), [contenteditable="true"], [role="textbox"]';
     if (target.matches?.(selector) && isVisible(target)) {
       return target;
     }
-    return visibleElements(root.querySelectorAll(selector))[0] || null;
+    const inputs = visibleElements(root.querySelectorAll(selector)).filter(element => !element.disabled && element.getAttribute("aria-disabled") !== "true");
+    if (inputs.length > 1) throw new Error("Hay varios campos; selecciona directamente el campo de esta pregunta.");
+    return inputs[0] || null;
   }
 
   function extractQuestion(root, options, input) {
+    const generic = text => /^(?:(?:pregunta|question)\s*)?\d*[.)\-:\s]*(?:pregunta|question)?\s*[*: .]*$/i.test(text) ||
+      /^(selecciona (la|una) respuesta|selecciona una opción|select an option)$/i.test(text);
     const selectors = [
       ".question",
       "[data-question]",
@@ -338,7 +511,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
       const candidates = visibleElements(root.querySelectorAll(selector));
       const candidate = candidates.find((element) => {
         const text = normalizedText(element.innerText);
-        return text.length >= 8 && text.length <= 8000;
+        return text.length >= 8 && text.length <= 8000 && !generic(text);
       });
       if (candidate) {
         return normalizedText(candidate.innerText);
@@ -355,16 +528,23 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     const lines = String(root.innerText || "")
       .split(/\r?\n/)
       .map(normalizedText)
-      .filter((line) => line && !excluded.has(line));
+      .filter((line) => line && !generic(line) && !excluded.has(line));
     return normalizedText(lines.slice(0, 12).join(" "));
   }
 
-  function applyResponse(response, context) {
+  async function applyResponse(response, context) {
+    const generation = STATE.generation;
     if (!response?.ok) {
-      showStatus(errorMessage(response?.error), "error", 5000);
+      showStatus(errorMessage(response?.error, response?.reason), "error", 5000);
       return;
     }
     if (!context.root.isConnected ||
+        context.selectionSnapshot?.some(snapshot => !snapshot.control.isConnected ||
+          !(context.select ? context.select.contains(snapshot.control) : context.popup ? context.popup.contains(snapshot.control) : context.root.contains(snapshot.control)) ||
+          snapshot.checked !== (snapshot.control.checked === true || snapshot.control.selected === true || snapshot.control.getAttribute("aria-checked") === "true" || snapshot.control.getAttribute("aria-selected") === "true") ||
+          snapshot.text !== normalizedText(snapshot.control.textContent || snapshot.control.innerText)) ||
+        context.imageSources?.some(image => !image.element.isConnected || (image.element.currentSrc || image.element.src) !== image.source) ||
+        (context.input && (context.input.disabled || context.input.getAttribute("aria-disabled") === "true" || (context.input.value ?? context.input.textContent) !== context.originalInputValue)) ||
         createFingerprint(
           context.root,
           context.payload.question,
@@ -382,24 +562,54 @@ if (!globalThis.__aivspDomAssistantInstalled) {
       Number.isFinite(result.confidence) &&
       result.confidence >= 0.75;
     if (result.mode === 1) {
-      const radio = context.optionElements.get(
-        String(result.optionKey || "").toUpperCase());
-      if (!radio?.isConnected) {
+      const keys = Array.isArray(result.optionKeys) ? result.optionKeys.map(key => String(key).toUpperCase()) : [String(result.optionKey || "").toUpperCase()];
+      if (!keys.length || new Set(keys).size !== keys.length || (!context.payload.multipleAnswers && keys.length !== 1) || keys.some(key => !context.optionElements.has(key))) {
+        showStatus("Las opciones devueltas no corresponden a la pregunta.", "error", 5000); return;
+      }
+      const selected = keys.map(key => context.optionElements.get(key));
+      const selectedText = selected.map(option => normalizedText(option.innerText || option.textContent));
+      const controls = [...context.optionElements.values()];
+      if (controls.some(control => !control?.isConnected || control.disabled || control.getAttribute("aria-disabled") === "true") ||
+          (context.select && !context.root.contains(context.select)) || (context.combo && !context.root.contains(context.combo))) {
         showStatus("La opción devuelta ya no está disponible.", "error", 5000);
         return;
       }
-      const target = radio.labels?.[0] || radio;
+      const radio = selected[0];
+      const target = context.select || context.combo || radio.labels?.[0] || radio;
       target.classList.add(
         subtle ? "aivsp-result-subtle" : "aivsp-result-visible");
       target.dataset.aivspResult = "true";
       if (mayApply) {
-        if (radio instanceof HTMLInputElement) {
-          radio.checked = true;
-          radio.dispatchEvent(new Event("input", { bubbles: true }));
-          radio.dispatchEvent(new Event("change", { bubbles: true }));
-        } else {
-          radio.click();
+        if (context.select) {
+          for (const option of Array.from(context.select.options)) option.selected = selected.includes(option);
+          context.select.dispatchEvent(new Event("input", { bubbles: true }));
+          context.select.dispatchEvent(new Event("change", { bubbles: true }));
+        } else if (context.payload.multipleAnswers) {
+          for (const control of controls) {
+            const checked = control.checked === true || control.getAttribute("aria-checked") === "true" || control.getAttribute("aria-selected") === "true";
+            if (checked !== selected.includes(control)) control.click();
+          }
+        } else radio.click();
+        let confirmed = context.select ? selected.every(option => option.selected) : context.combo ? false :
+          controls.every(control => (control.checked === true || control.getAttribute("aria-checked") === "true") === selected.includes(control));
+        if (context.combo) {
+          // React/Forms can update the selected caption after the click returns.
+          // Only observe here: never retry the click or reuse a newer generation.
+          for (let attempt = 0; attempt <= 20; attempt++) {
+            if (generation !== STATE.generation) return;
+            if (!context.root.isConnected) break;
+            const live = context.combo.isConnected ? context.combo : dropdownTrigger(context.root);
+            const marked = selected.every(option => option.isConnected && option.getAttribute('aria-selected') === 'true');
+            const visibleOptions = live ? visibleElements(live.querySelectorAll('[role="option"]')) : [];
+            const caption = live ? normalizedText(live.innerText || live.value || '') : '';
+            confirmed = !!live && context.root.contains(live) && (marked ||
+              (selectedText.length === 1 && selectedText[0] && visibleOptions.length === 0 &&
+                live.getAttribute('aria-expanded') !== 'true' && caption === selectedText[0]));
+            if (confirmed || attempt === 20) break;
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
         }
+        if (!confirmed) { showStatus("Se intentó aplicar, pero el formulario no confirmó el cambio. Revisa la respuesta.", "warning", 5000); return; }
       }
       showStatus(
         response.applyAnswers === true && !mayApply
@@ -492,7 +702,7 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     element.setAttribute("aria-live", kind === "error" ? "assertive" : "polite");
     document.documentElement.appendChild(element);
     STATE.statusElement = element;
-    if (duration > 0) {
+    if (duration > 0 && !(STATE.testDiagnostics && kind === "error")) {
       setTimeout(() => {
         element.remove();
         if (STATE.statusElement === element) {
@@ -617,17 +827,21 @@ if (!globalThis.__aivspDomAssistantInstalled) {
   }
 
   function usableRadios(root) {
-    return Array.from(
+    return distinctChoices(Array.from(
       root.querySelectorAll('input[type="radio"], [role="radio"]'))
-      .filter(isUsableRadio);
+      .filter(isUsableChoice));
   }
 
-  function isUsableRadio(radio) {
+  function distinctChoices(controls) {
+    return controls.filter(control => !controls.some(other => other !== control && other.contains?.(control)));
+  }
+
+  function isUsableChoice(radio) {
     if (isVisible(radio)) {
       return true;
     }
     if (!(radio instanceof HTMLInputElement) ||
-        radio.type !== "radio" ||
+        !['radio', 'checkbox'].includes(radio.type) ||
         radio.disabled) {
       return false;
     }
@@ -664,6 +878,8 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     const source = [
       location.origin,
       location.pathname,
+      location.search,
+      location.hash,
       normalizedText(root.innerText),
       question,
       ...options.map((option) => `${option.key}:${option.text}`)
@@ -676,8 +892,19 @@ if (!globalThis.__aivspDomAssistantInstalled) {
     return (hash >>> 0).toString(16).padStart(8, "0");
   }
 
-  function errorMessage(code) {
+  function errorMessage(code, reason) {
+    const reasons = {
+      insufficient_context: "La IA se abstuvo por falta de contexto. Revisa que se leyó el enunciado y la imagen.",
+      no_option_selected: "La IA devolvió una respuesta sin seleccionar ninguna clave válida.",
+      unknown_option_key: "La IA devolvió una clave que no pertenece a estas opciones.",
+      duplicate_option_keys: "La IA repitió claves de opción; no se aplicó la respuesta.",
+      too_many_option_keys: "La IA eligió varias opciones en una pregunta de respuesta única."
+    };
+    if (code === 'invalid_inference_response' && reasons[reason]) return reasons[reason];
     const messages = {
+      images_not_enabled: "Activa Adjuntar imágenes en las opciones de la extensión.",
+      app_upgrade_required: "Esta pregunta necesita la app visual nueva. Cierra el ejecutable anterior e inicia el paquete 0.3.",
+      acp_provider_required: "Selecciona Antigravity CLI en la bandeja para imágenes o varias respuestas.",
       token_missing: "Configura el token local de AIVSP.",
       bridge_unavailable: "AIVSP no está disponible en el puente local.",
       bridge_timeout: "AIVSP agotó el tiempo de espera.",

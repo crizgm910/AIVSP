@@ -111,6 +111,8 @@ public partial class App : System.Windows.Application
                     services.AddSingleton<GeminiCliInferenceService>();
                     services.AddSingleton<IAntigravityCliProcessRunner, AntigravityCliProcessRunner>();
                     services.AddSingleton<AntigravityCliInferenceService>();
+                    services.AddSingleton<IAntigravityAcpClient, AntigravityAcpClient>();
+                    services.AddSingleton<IBrowserAdvancedInferenceService, AntigravityBrowserInferenceService>();
                     services.AddSingleton<IInferenceService, InferenceServiceRouter>();
                     services.AddSingleton<BrowserDomAssistantService>();
 

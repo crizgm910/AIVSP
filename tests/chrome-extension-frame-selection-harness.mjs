@@ -30,14 +30,14 @@ const send = (type, extra = {}) => { for (const f of listeners) f({ type, ...ext
 inject(); const initial = context.__aivspDomAssistantController;
 for (let i = 0; i < 5; i++) { inject(); send("AIVSP_BEGIN_SELECTION"); assert.equal(listeners.size, 1); assert.equal(context.__aivspDomAssistantController, initial); assert.ok(classes.has("aivsp-selection-active")); }
 inject('const AIVSP_CONTENT_SCRIPT_VERSION = "0.2.8"; const previousAivspController = null;'); inject();
-inject(source.replace('VERSION = "0.2.12"', 'VERSION = "test-upgrade"'));
+inject(source.replace('VERSION = "0.3.8"', 'VERSION = "test-upgrade"'));
 assert.equal(listeners.size, 1); assert.notEqual(context.__aivspDomAssistantController, initial);
 send("AIVSP_BEGIN_SELECTION"); events.get("keydown")({ key: "Escape" }); assert.equal(events.has("click"), false);
 send("AIVSP_BEGIN_SELECTION"); send("AIVSP_CANCEL_SELECTION"); assert.equal(classes.size, 0);
 function question(text) {
   const heading = new Element(); heading.innerText = text;
   const input = new Textarea(), root = new Element(); root.innerText = text; root.parentElement = body;
-  root.matches = s => s.startsWith("fieldset"); root.querySelector = () => heading;
+  root.matches = s => s.startsWith("fieldset"); root.querySelector = s => s.startsWith(".question") ? heading : null;
   root.querySelectorAll = s => s.startsWith("textarea") ? [input] : s === ".question" ? [heading] : [];
   return { root, input };
 }
@@ -58,4 +58,16 @@ assert.match(elements.get("aivsp-dom-status").textContent, /PRUEBA: haz clic/);
 const openWithTestMode = click(first);
 pending[4].resolve(response("Respuesta normal")); await openWithTestMode;
 assert.equal(first.input.value, "Respuesta normal", "Matrix test mode must not replace normal open answers");
+send("AIVSP_BEGIN_SELECTION", { diagnosticMode: true });
+assert.equal(elements.get("aivsp-dom-status").textContent, "AIVSP · clic en pregunta");
+const diagnosticRequest = click(second);
+pending[5].resolve({ ok: false, error: "bridge_unavailable" }); await diagnosticRequest;
+assert.match(elements.get("aivsp-dom-status").textContent, /AIVSP/);
+assert.notEqual(elements.get("aivsp-dom-status").textContent, "!");
+send("AIVSP_BEGIN_SELECTION");
+assert.equal(elements.get("aivsp-dom-status").textContent, "+", "Disabling diagnostics restores subtle indicators");
+send("AIVSP_BEGIN_SELECTION", { diagnosticMode: true });
+const abstained = click(second);
+pending[6].resolve({ ok: false, error: 'invalid_inference_response', reason: 'insufficient_context' }); await abstained;
+assert.match(elements.get('aivsp-dom-status').textContent, /se abstuvo/);
 console.log("Selector: reinyección, actualización, Escape, texto abierto y respuestas tardías aprobados.");

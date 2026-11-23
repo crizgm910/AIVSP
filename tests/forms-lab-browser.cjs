@@ -91,19 +91,14 @@ const { chromium } = require('playwright');
         await frame.evaluate(() => { globalThis.extracted = null; globalThis.arm({ type: 'AIVSP_BEGIN_SELECTION' }); });
         await frame.locator(id === 'matrix' ? '#matrix-0-0' : `[data-case-id="${id}"] h2`).click();
         const extracted = await frame.evaluate(() => globalThis.extracted);
-        if (frame !== page.mainFrame() && id !== 'matrix') {
-          assert.equal(extracted, null);
-          assert.match(await frame.locator('#aivsp-dom-status').getAttribute('aria-label'), /Matriz reconocida/);
-          continue; // Reproduced existing bug: neighboring matrix captures normal question.
-        }
         assert.ok(extracted, `${id} must extract in ${frame.url()}: ${await frame.locator('#aivsp-dom-status').getAttribute('aria-label')}`);
         assert.equal(extracted.mode, mode); assert.equal(extracted.options.length, count);
       }
     }
     await page.evaluate(() => { globalThis.extracted = null; globalThis.arm({ type: 'AIVSP_BEGIN_SELECTION' }); });
     await page.locator('[data-case-id="check"] h2').click();
-    assert.equal(await page.evaluate(() => globalThis.extracted), null);
-    assert.match(await page.locator('#aivsp-dom-status').getAttribute('aria-label'), /no contiene opciones/);
+    assert.equal(await page.evaluate(() => globalThis.extracted.multipleAnswers), true);
+    assert.equal(await page.evaluate(() => globalThis.extracted.options.length), 4);
     await page.locator('#aivsp-dom-status').evaluate(element => element.remove());
     await page.locator('#single-0').scrollIntoViewIfNeeded();
     await fs.mkdir(path.join(__dirname, '../outputs'), { recursive: true });
@@ -113,6 +108,6 @@ const { chromium } = require('playwright');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     await page.screenshot({ path: path.join(__dirname, '../outputs/forms-lab-mobile.png') });
     assert.deepEqual(errors, []);
-    console.log('PASS laboratorio: 35 casos; imagen espacial, desplegable personalizado por clic/teclado, imagen suelta con tres preguntas sin vínculos DOM, informe, iframes y móvil. Extractor real: matriz funciona; sigue reproducido fallo de matriz vecina. No valida IA, visión ni permisos reales.');
+    console.log('PASS laboratorio: 35 casos; extractor de normales y matriz en tres documentos sin confundir la matriz vecina, y casillas múltiples. No valida IA ni permisos reales.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

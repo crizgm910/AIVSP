@@ -1,5 +1,24 @@
 # AIVSP
 
+## Integración visual DOM — v0.3.0-alpha.2
+
+Extensión `0.3.8`: soporte inicial de casillas múltiples, listas HTML y desplegables
+ARIA, imágenes propias y una imagen previa compartida por varias preguntas.
+Las consultas con imágenes o varias respuestas requieren **Antigravity CLI con ACP**
+(probado con agy 1.5.1 y Gemini 3.8 Flash). OCR y VLM de escritorio no cambian.
+
+1. Cierra la app anterior y abre el ejecutable del paquete `v0.3.0-alpha.2`.
+2. Recarga la extensión actual y después el formulario. Conserva tu token.
+3. Selecciona Antigravity CLI en la app. En Opciones de la extensión habilita
+   **Adjuntar imágenes** y la aplicación de respuestas si quieres rellenar campos.
+4. Desactiva PRUEBA de matrices para consultar IA. Usa `Ctrl+Shift+Y` y clic.
+
+Solo se envían las imágenes asociadas a la pregunta, nunca una captura completa.
+El consentimiento está apagado por defecto. Se cancela si la imagen no es accesible,
+el contexto cambia o faltan controles inequívocos. La asociación por proximidad es
+heurística: revisa el resultado antes de enviarlo. Teams real sigue pendiente.
+Detalles y pruebas: [`tests/BROWSER-VISUAL-INTEGRATION.md`](tests/BROWSER-VISUAL-INTEGRATION.md).
+
 ## Laboratorio de preguntas (20 de noviembre de 2026)
 
 35 casos de prueba, incluidas varias respuestas, desplegables, matrices y una
@@ -13,7 +32,7 @@ node scripts/serve-forms-lab.mjs
 
 Abre `http://127.0.0.1:8765` en Chrome. Consulta
 [`tests/forms-lab/README.md`](tests/forms-lab/README.md) para tipos, registro de
-resultados, iframes y limitaciones conocidas. No añade soporte nuevo al extractor.
+resultados, iframes y limitaciones conocidas.
 
 AIVSP es un asistente local de escritorio para Windows. Captura la ventana activa,
 extrae texto mediante OCR y utiliza un proveedor de inferencia para marcar una opción
@@ -21,13 +40,31 @@ o generar una respuesta de texto. El modo VLM permanece deshabilitado.
 
 ## Estado
 
-Versión actual: `v0.2.0-beta.2` (extensión en código `0.2.12`).
+Versión de prueba actual: `v0.3.0-alpha.2` (extensión en código `0.3.8`).
+
+Endurecimiento para Teams SPA: descarta respuestas si cambia query/fragmento de URL
+y evita tomar imágenes ocultas de otra vista. Se mantienen imágenes fuera de pantalla.
+Regresiones de navegador: `scripts/test-browser-regressions.ps1`, con Playwright y
+servidor local de fixtures activo. Lista de comprobación real en `chrome-extension/README.md`.
+
+La revisión actual evita enviar un título genérico como “Pregunta” cuando existe
+un enunciado descriptivo debajo. La app distingue rechazos de claves y abstención
+sin registrar preguntas/respuestas; conserva validación estricta antes de aplicar.
+
+Para imágenes del CDN de Forms bloqueadas por CORS, en Opciones pulsa
+**Autorizar imágenes de Microsoft Forms** y concede el permiso al dominio exacto.
+Es independiente de habilitar los marcos Forms/Teams; no autoriza otros hosts.
+Mantén **Adjuntar imágenes** activado y guardado. No cambia ejecutable ni token.
+
+La revisión 0.3.1 permite mostrar temporalmente los errores en texto desde Opciones
+→ Diagnóstico de prueba, sin activar el marcado fijo de matrices. El paquete completo
+anterior conserva extensión 0.3.0; recarga la carpeta actual para este diagnóstico.
 
 El ZIP completo beta.2 anterior incluye extensión 0.2.9. Para las matrices usa la
-carpeta `chrome-extension/` actual o el ZIP específico de extensión 0.2.12.
+carpeta `chrome-extension/` actual. No mezcles el paquete beta.2 con funciones visuales nuevas.
 
 - Compilación Release: 0 errores y 0 advertencias.
-- Pruebas automatizadas: 165 aprobadas, más las regresiones JavaScript.
+- Pruebas automatizadas: 190 aprobadas, más las regresiones JavaScript y de navegador.
 - Proveedor predeterminado: Ollama local con `qwen3:4b`.
 - Proveedores opcionales: Antigravity CLI y Gemini CLI.
 - Perfiles visuales: `Visible` y `Subtle`.

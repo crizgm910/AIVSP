@@ -47,13 +47,13 @@ if (-not $selectionCommand -or
 if ($manifest.commands.'_execute_action') {
     throw 'El atajo ambiguo _execute_action no debe estar presente.'
 }
-if ($manifest.version -ne '0.2.12') {
-    throw 'La versión esperada de la extensión es 0.2.12.'
+if ($manifest.version -ne '0.3.8') {
+    throw 'La versión esperada de la extensión es 0.3.8.'
 }
 $expectedOptionalHosts = @('https://forms.cloud.microsoft/*', 'https://forms.office.com/*',
-    'https://teams.microsoft.com/*', 'https://teams.cloud.microsoft/*')
+    'https://teams.microsoft.com/*', 'https://teams.cloud.microsoft/*', 'https://hive.forms.usercontent.microsoft/*')
 if (Compare-Object @($manifest.optional_host_permissions | Sort-Object) @($expectedOptionalHosts | Sort-Object)) {
-    throw 'Los permisos opcionales deben limitarse a Forms y Teams.'
+    throw 'Los permisos opcionales deben limitarse a Forms, Teams y su CDN de imágenes exacto.'
 }
 
 $node = Get-Command node -ErrorAction SilentlyContinue
@@ -82,6 +82,8 @@ if ($LASTEXITCODE -ne 0) { throw 'Fallaron las regresiones de selección.' }
 if ($LASTEXITCODE -ne 0) { throw 'Fallaron las regresiones de matrices.' }
 & $node.Source (Join-Path $root 'tests\chrome-extension-options-harness.mjs')
 if ($LASTEXITCODE -ne 0) { throw 'Fallaron las regresiones de opciones.' }
+& $node.Source (Join-Path $root 'tests\chrome-extension-image-worker-harness.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Fallaron las protecciones de descarga de imágenes Forms.' }
 $forbiddenPatterns = @(
     '<all_urls>',
     'externally_connectable',
@@ -111,7 +113,7 @@ $requiredSubtlePatterns = @(
     'result.confidence >= 0.75',
     '"AIVSP · revisa"',
     'if (!mayApply)',
-    'AIVSP_CONTENT_SCRIPT_VERSION = "0.2.12"',
+    'AIVSP_CONTENT_SCRIPT_VERSION = "0.3.8"',
     '__aivspDomAssistantController'
 )
 foreach ($pattern in $requiredSubtlePatterns) {

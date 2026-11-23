@@ -1,39 +1,103 @@
 # Estado del proyecto: AIVSP
 
-Prueba de viabilidad visual (2026-11-20): Antigravity CLI 1.5.1 por ACP leyó PNGs
-adjuntos con el modelo Gemini 3.8 Flash y esfuerzo bajo: código aleatorio central
-y Saturno en cuadrícula, ambos correctos. Prueba negativa de lectura bloqueada sin
-herramientas. Ver `tests/ANTIGRAVITY-ACP-PROBE.md`. Solo es un prototipo aislado;
-la aplicación y extensión publicadas todavía no reciben ni interpretan imágenes.
+**Versión de prueba actual: `v0.3.0-alpha.2`; extensión en código `0.3.8`.**
 
-Actualización de pruebas: 20 de noviembre de 2026. Laboratorio local con 35 casos
-en `tests/forms-lab/`, incluidos desplegables, selección múltiple, imagen compartida
-por tres preguntas e iframes de dos orígenes. Verificado en Chrome headless con
-puente simulado y sin IA. No se han implementado esos tipos en la extensión.
-Se reprodujo un fallo de selección de contenedor: una matriz vecina puede
-interceptar preguntas normales en el mismo marco. Se documenta, no se declara corregido.
-Ampliación visual: cuadrícula espacial con desplegable personalizado y otra imagen
-suelta seguida de tres tarjetas sin relaciones DOM de ayuda. Validado el formulario,
-no la capacidad del asistente de interpretar imágenes ni asociarlas por contexto.
+Confirmación del usuario (registrada el 23 de noviembre de 2026): la última prueba
+funcionó en Forms directamente. Teams todavía no fue probado y se comprobará más
+adelante. No se declara compatibilidad física con Teams por estas pruebas de Forms.
 
-**Versión actual: `v0.2.0-beta.2`; extensión en código `0.2.12`.**
+21 de noviembre: usuario confirma opción múltiple funcionando, además de imagen y
+desplegable. Endurecimiento para Teams: reproducidos y corregidos contexto que no
+detectaba cambio de asignación en query/hash con DOM conservado e imagen CSS oculta
+de otra vista tomada como estímulo. Imagen fuera de pantalla sigue funcionando.
+Pruebas locales cubren edición, campo deshabilitado, sustitución, ráfaga de consultas,
+camino válido y etiquetas largas. No cambia inferencia, ejecutable ni permisos.
+Guía de comprobación física en chrome-extension/README.md: pendiente Teams real y
+persistencia al navegar. Usar carpeta actual/ZIP 0.3.8; paquete alpha.2 conserva 0.3.5.
 
-La prueba real grabada de Teams no marcó el radio. Se confirmó opción de prueba
-activa y conexión correcta, pero aún no su causa. Versión 0.2.12 añade mensajes
-visibles en pruebas y diagnóstico local en Opciones para distinguir activación,
-extracción, ausencia de matriz y clic sin cambio confirmado. No se declara que el
-formulario real de Teams funcione hasta revisar ese diagnóstico y repetir la prueba.
+Usuario confirma funcionamiento con imágenes y desplegable; reporta que no se
+detectan opciones de preguntas normales. Reproducidos patrones de accesibilidad
+con nombres 0/1/2 en vez de etiquetas, casillas ocultas omitidas y controles nativos
+anidados en ARIA. Extensión 0.3.7 corrige esos patrones; falta confirmar el DOM real.
+Prueba sintética ampliada: imagen separada fuera de pantalla compartida por tres
+preguntas (radio, abierta, casillas), sustitución por nueva imagen y rechazo de
+imagen propia de una pregunta vecina. Inferencia simulada: no equivale a validación
+física de Forms/Teams. Misma app alpha.2/token/permisos. ZIP independiente 0.3.7.
 
-Modo de prueba de matrices: opción desactivada por defecto en las opciones de la
-extensión. Hace clic en la primera columna de respuesta de una fila seleccionada,
-sin IA, sin envío del formulario y sin afirmar que sea una calificación correcta.
-Validación automatizada aprobada; la prueba física de la rúbrica de Teams sigue pendiente.
+Nueva captura del usuario: imagen procesada y C) Saturno visible en el desplegable,
+pero aviso de cambio no confirmado. Se registra como cambio local observado, no
+como persistencia al navegar ni prueba completa de Teams. Reproducida confirmación
+prematura con actualización diferida de 180 ms; extensión 0.3.6 espera hasta un
+segundo, sin segundo clic, y conserva avisos reales. Pruebas de control sustituido,
+ausencia de cambio y cancelación por nueva activación. Falta repetir Forms real.
+El paquete completo alpha.2 anterior contiene extensión 0.3.5; usar carpeta actual
+o ZIP independiente 0.3.6, sin cambiar ejecutable ni token.
 
-Actualización de extensión: soporte inicial de matrices HTML/ARIA con separación
-por fila, encabezados verificados y aviso para rúbricas sin evidencia. Pruebas JS
-de matrices y 165 pruebas .NET aprobadas. Falta probar la matriz real de Teams.
-El ZIP completo beta.2 generado antes de este cambio contiene extensión 0.2.9;
-para matrices usar `chrome-extension/` actual o el ZIP de extensión 0.2.12.
+Intentos eb99315a y ee49f39b: llegaron a Antigravity, JSON interpretado, rechazo
+por contrato de opciones. No es el anterior bloqueo CORS. Reproducido aparte un
+fallo del extractor: con encabezado “28. Pregunta *” y descripción debajo, enviaba
+solo el título. Corregido y probado; no se presume que sea la única causa real.
+Ahora se registran conteos/longitud y motivo estático del rechazo, sin contenido.
+No se permite aplicar claves desconocidas, duplicadas ni abstenciones.
+
+190 pruebas .NET aprobadas; cinco harnesses JS y suites Chrome. Nueva prueba real
+ACP: cuatro consultas correctas (centro, debajo, fila múltiple y primos) y
+cancelación. Pendiente repetir físicamente el Forms con app alpha.2/extensión 0.3.5.
+
+CDN de Forms confirmado en la imagen aportada: HTTP 200, JPEG de 37723 bytes,
+sin autenticación ni cabecera CORS. Extensión 0.3.4 añade autorización opcional
+separada al dominio exacto hive.forms.usercontent.microsoft. Broker sin cookies,
+redirecciones ni envío de token; solo /images, formatos/firma y tamaño acotados.
+Pruebas unitarias de permisos/seguridad y trece casos Chrome de imagen aprobados.
+La descarga original se comprobó por HTTP, no con la extensión instalada.
+Pendiente concesión real del permiso y repetición del Forms. Misma app/token.
+
+La nueva captura confirma apertura del menú de Forms y fallo al adjuntar su imagen.
+Revisión 0.3.3 separa tamaño, canvas, codificación, CORS/recarga y timeout; reduce
+imágenes dentro del límite existente. Pruebas con CORS real aprobado/denegado y
+fallos simulados; pendiente obtener el código del Forms. No amplía permisos ni
+elude restricciones del servidor. Misma app/token; ZIP independiente 0.3.3.
+
+Error de Forms identificado en captura: “La selección no contiene opciones ni un
+campo de respuesta”, con imagen y desplegable. Corrección candidata 0.3.2 amplía
+apertura/detección listbox, espera de opciones y portales externos. Pruebas Chrome
+sintéticas aprobadas; pendiente repetir el formulario real para confirmar su DOM.
+No se cambian OCR, inferencia ni ejecutable en esta revisión. Usar extensión actual.
+
+Diagnóstico previo del Forms real: capturas confirman consentimiento y aplicación
+activados. Los intentos no aparecen como consultas en los logs de la app. Añadido
+diagnóstico visual opcional para ver el motivo gestionado del fallo; no activa el
+clic fijo de matrices. El mensaje obtenido motivó la corrección candidata anterior.
+El paquete completo anterior contiene extensión 0.3.0; usar la carpeta actual o
+el ZIP independiente actual. El ejecutable no necesita cambiar en esta revisión.
+
+Actualización: 20 de noviembre de 2026. Integración inicial de imágenes DOM,
+estímulo visual previo compartido por varias preguntas, casillas múltiples,
+select/multiselect HTML y combobox ARIA de opción única. OCR/VLM de escritorio
+permanecen sin cambios. Las consultas avanzadas requieren Antigravity CLI/ACP;
+las imágenes requieren consentimiento explícito en Opciones (apagado por defecto).
+
+Validación: 185 pruebas .NET; cuatro harnesses JS; laboratorio de 35 casos en
+Chrome headless y prueba específica de aplicación de controles, asociación de
+imagen a tres preguntas y rechazo de cambios del usuario. Estos ensayos de
+navegador usan inferencia simulada. Por separado, el servicio C# real con agy 1.5.1
+y Gemini 3.8 Flash resolvió centro de imagen, posición inferior, fila con varias
+respuestas y primos multiselección; pasó cancelación. Informe reproducible en
+`tests/BROWSER-VISUAL-INTEGRATION.md`. Corregida la matriz vecina que interceptaba
+preguntas normales.
+
+Riesgos pendientes: prueba física de Teams (marcos, permisos, extracción y marcado),
+imágenes protegidas por CORS, asociación ambigua de estímulos, rerenderizados de
+controles personalizados y errores del modelo. No se garantizan todos los tipos
+del laboratorio; ordenar, emparejar, archivos y varios campos ambiguos no se añaden.
+No se envían formularios automáticamente ni se usa una captura completa como fallback.
+
+El modo PRUEBA de matrices continúa apagado por defecto: marca una primera
+columna fija sin IA, no evalúa una rúbrica y debe desactivarse para respuestas reales.
+El diagnóstico de Teams sigue disponible sin preguntas, respuestas, URL ni tokens.
+
+El paquete beta.2 anterior no incluye esta integración; no mezclarlo con la extensión
+nueva para probar imágenes. La comprobación de protocolo rechaza esa combinación.
 
 Validación física posterior de Antigravity: tres preguntas de opción múltiple y
 tres abiertas completadas en logs; el usuario confirmó autopegado en el campo

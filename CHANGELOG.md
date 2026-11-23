@@ -7,6 +7,83 @@ con sufijo `alpha` o `beta` son preliminares y pueden contener defectos conocido
 
 ## [Sin publicar]
 
+- Extensión 0.3.8: contexto incluye query/hash de navegación para descartar respuestas
+  de una asignación anterior con DOM conservado; excluye imágenes CSS ocultas de
+  otras vistas, sin excluir estímulos visibles fuera de pantalla.
+- Reproducidos ambos fallos antes de corregir. Ampliadas pruebas de navegación SPA,
+  edición, destino deshabilitado/sustituido, ráfagas, flujo válido y opciones largas.
+  Script de regresiones completo que se detiene ante cualquier fallo. Teams real pendiente.
+
+- Extensión 0.3.7: nombres de opciones por aria-labelledby, detección de casillas
+  ocultas con etiqueta visible y deduplicación de control nativo dentro de ARIA.
+  Regresión reproducida antes/después, sin cambiar inferencia ni permisos.
+- Ampliada prueba de imagen separada fuera de pantalla: tres preguntas radio/
+  abierta/casillas, wrappers anidados, cambio de estímulo y rechazo de imagen
+  perteneciente a otra pregunta. Prueba sintética, pendiente confirmación real.
+
+- Extensión 0.3.6: espera observacional de hasta un segundo para confirmar cambios
+  de desplegable tras el clic; no repite acciones ni considera las opciones del
+  menú como valor seleccionado. Pruebas de actualización tardía, control sustituido,
+  ningún cambio y generación nueva. No implica persistencia remota de Forms.
+
+## [0.3.0-alpha.2] - 2026-11-20
+
+- Extensión 0.3.5: ignora títulos genéricos Pregunta/Question al extraer el enunciado;
+  regresión Chrome que falla con el código anterior y pasa con la corrección.
+- Razones estáticas de rechazo: claves desconocidas/duplicadas/ausentes, selección
+  múltiple indebida o abstención por falta de contexto. Se conserva el rechazo seguro.
+- Métricas sin contenido: longitud del enunciado, imágenes y conteos de claves.
+  El prompt aclara que las claves son las del contrato, no prefijos visibles.
+- 190 pruebas .NET y regresiones JS/Chrome aprobadas; cuatro consultas reales ACP
+  correctas más cancelación. Falta confirmar el Forms real, no se declara resuelto.
+
+### Cambios de extensión previos incluidos en este paquete
+
+- Extensión 0.3.4: permiso opcional independiente para
+  `https://hive.forms.usercontent.microsoft/*` y broker acotado de imágenes ante
+  fallo CORS. Sin cookies, redirecciones, URLs arbitrarias ni tokens reenviados;
+  validación de emisor/ruta, MIME/firma, límite 4 MiB y timeout de diez segundos.
+- Probados botón de permiso concedido/denegado, consentimiento, rutas/emisores
+  inválidos, tamaño de cabecera/stream y errores saneados. Chrome: broker concedido,
+  denegado y respuesta inválida, además de las diez regresiones de imagen previas.
+  Falta confirmar el permiso y marcado dentro del Forms real.
+
+- Extensión 0.3.3: causas de imagen separadas (CORS/recarga, timeout, tamaño,
+  canvas y JPEG). Reducción acotada antes de rechazar por tamaño; recarga anónima
+  solo ante canvas bloqueado. Pruebas Chrome con dos orígenes reales y CORS permitido
+  o denegado; errores simulados de tamaño/canvas/conversión/timeout y cancelación.
+  No amplía permisos ni asegura resolver imágenes protegidas del Forms real.
+
+- Extensión 0.3.2: corrección candidata para desplegables personalizados de Forms:
+  listbox/combobox, apertura asíncrona, portales ARIA o recién montados, contenedor
+  questionItem prioritario y rechazo de menús ambiguos. Prueba Chrome específica
+  de extracción, aplicación, menús vecinos y cancelación. Falta prueba del Forms real.
+
+- Extensión 0.3.1: diagnóstico visual opcional, independiente de PRUEBA de matrices,
+  para leer el error gestionado en Forms. Apagado por defecto; probado guardado,
+  propagación a marcos, texto de error y vuelta al indicador discreto. No cambia
+  extracción ni inferencia; pendiente identificar el fallo del formulario real.
+
+## [0.3.0-alpha.1] - 2026-11-20
+
+- Extensión 0.3.0: casillas múltiples, select/multiselect HTML y combobox ARIA de
+  opción única; validación de las claves devueltas antes de aplicar respuestas.
+- Imágenes propias o del bloque de estímulo anterior, compartidas por preguntas
+  sucesivas. Consentimiento explícito apagado por defecto, límites de tamaño,
+  cancelación por imagen inaccesible y sin capturas completas de pantalla.
+- Cliente ACP C# para Antigravity con modelo/esfuerzo explícitos, perfil temporal
+  sin herramientas, rechazo de permisos y limpieza/cancelación del proceso.
+- Puente protocolo 2: la extensión rechaza app antigua/proveedor incompatible
+  para consultas avanzadas, en lugar de perder silenciosamente el contexto visual.
+- Corregida la matriz vecina que interceptaba preguntas normales. Protección ante
+  edición del usuario, controles/imagen cambiados y destinos ambiguos.
+- 185 pruebas .NET, cuatro harnesses JS y dos suites Chrome headless aprobados.
+  Cuatro consultas reales por ACP y cancelación aprobadas con agy 1.5.1.
+- No modifica OCR ni VLM de escritorio. Teams real, CORS de imágenes protegidas y
+  asociación semántica ambigua siguen pendientes; versión preliminar, no estable.
+
+### Trabajo previo a la integración visual
+
 - Prueba aislada `probe-antigravity-acp.cjs`: negocia imagen inline por ACP,
   selecciona modelo y esfuerzo de sesión, valida código visual aleatorio y
   posición de un planeta, y prueba rechazo de lectura de archivo. Resultado real

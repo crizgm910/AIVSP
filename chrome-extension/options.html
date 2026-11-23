@@ -31,6 +31,16 @@
     </label>
 
     <label class="checkbox">
+      <input id="allow-browser-images" type="checkbox">
+      Adjuntar imágenes de la pregunta a Antigravity (ACP, requiere la app nueva)
+    </label>
+    <p class="hint">Puede enviar a la nube la imagen propia o el bloque visual anterior asociado.
+      No captura la pantalla completa. Si no puede leer la imagen, se cancela.</p>
+    <button id="enable-forms-images" type="button" class="secondary">Autorizar imágenes de Microsoft Forms</button>
+    <p class="hint">Permiso opcional solo para hive.forms.usercontent.microsoft.
+      Permite descargar la imagen seleccionada cuando el formulario bloquea la lectura por CORS.
+      No envía cookies ni autoriza otros servidores. Adjuntar imágenes debe seguir activado.</p>
+    <label class="checkbox">
       <input id="matrix-test-mode" type="checkbox">
       PRUEBA de matrices: marcar siempre la primera opción de la fila (sin IA)
     </label>
@@ -48,6 +58,12 @@
     </section>
     <section>
       <h2>Diagnóstico de prueba</h2>
+      <label class="checkbox">
+        <input id="diagnostic-mode" type="checkbox">
+        Mostrar mensajes de diagnóstico en el formulario (temporal, no discreto)
+      </label>
+      <p class="hint">Muestra el motivo del fallo sin activar el marcado fijo de matrices.
+        Guarda, recarga el formulario y repite el intento. Desactívalo al terminar.</p>
       <p>Últimas etapas del modo de prueba. Solo registra fecha y conteos; no guarda preguntas ni tokens.</p>
       <button id="refresh-diagnostics" type="button" class="secondary">Actualizar diagnóstico</button>
       <pre id="matrix-diagnostics" aria-live="polite"></pre>

@@ -41,7 +41,10 @@ la prueba de dos orígenes y puede necesitar acceso a archivos en la extensión.
 
 Los rótulos de soporte describen el estado del código, **no certifican que todos
 los casos funcionen**. Los no implementados están incluidos precisamente para
-descubrir fallos. VLM sigue deshabilitado: no se añadió soporte de imágenes aquí.
+descubrir fallos. VLM de escritorio sigue deshabilitado. La integración DOM visual
+inicial está en app v0.3.0-alpha.1/extensión 0.3.0, requiere Antigravity ACP y
+consentimiento para adjuntar imágenes. Los rótulos históricos de las tarjetas no
+sustituyen el informe de validación `../BROWSER-VISUAL-INTEGRATION.md`.
 
 ## Prueba manual
 
@@ -72,12 +75,10 @@ compartida por tres tarjetas, dos orígenes de iframe y layout de 390 px.
 Se ejecutó también el content script real con un puente simulado, sin probar
 permisos de la extensión cargada ni inferencia real.
 
-**Fallo existente reproducido, no corregido en esta tarea:** en los marcos que
-mezclan una única matriz con preguntas normales, `extractMatrix` puede encontrar
-la matriz vecina al ascender por el contenedor. La consulta normal termina con
-“Matriz reconocida: haz clic en la fila…” en lugar de extraer su propio enunciado.
-La prueba registra esa limitación como conocida, no como extracción correcta.
-Las matrices sí extrajeron su propia fila en los tres documentos.
+El fallo de matriz vecina encontrado en la primera ronda se corrigió limitando
+la búsqueda al contenedor de la pregunta. Las regresiones verifican preguntas
+normales y matrices en los tres documentos, sin confundir contenedores.
 
-Las regresiones existentes de la extensión también pasaron. No se modificaron
-captura, OCR, inferencia, autopegado ni el código de extracción de la extensión.
+`node tests/browser-advanced.cjs` comprueba además respuestas múltiples, select,
+combobox, imágenes propias/previas y protección de cambios durante la espera.
+Usa puente simulado; no valida permisos reales de Teams ni razonamiento del modelo.

@@ -3,6 +3,55 @@
 const BRIDGE_URL = "http://127.0.0.1:18791";
 const REQUEST_TIMEOUT_MS = 40000;
 let diagnosticWrites = Promise.resolve();
+const FORM_IMAGE_ORIGIN = 'https://hive.forms.usercontent.microsoft';
+let activeImageLoads = 0;
+
+async function fetchFormImage(imagePath, sender) {
+  let origin;
+  try { origin = new URL(sender.url).origin; } catch { return { ok: false, error: 'IMAGE_SENDER' }; }
+  if (!Number.isInteger(sender.tab?.id) || !['https://forms.cloud.microsoft', 'https://forms.office.com',
+    'https://teams.microsoft.com', 'https://teams.cloud.microsoft'].includes(origin)) return { ok: false, error: 'IMAGE_SENDER' };
+  if (typeof imagePath !== 'string' || imagePath.length > 2048 || !/^\/images\/[A-Za-z0-9_/-]+$/.test(imagePath))
+    return { ok: false, error: 'IMAGE_PATH' };
+  const settings = await chrome.storage.local.get({ allowBrowserImages: false });
+  if (settings.allowBrowserImages !== true) return { ok: false, error: 'IMAGE_CONSENT' };
+  if (!await chrome.permissions.contains({ origins: [FORM_IMAGE_ORIGIN + '/*'] })) return { ok: false, error: 'IMAGE_HOST_PERMISSION' };
+  if (activeImageLoads >= 4) return { ok: false, error: 'IMAGE_BUSY' };
+  activeImageLoads++;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  try {
+    const response = await fetch(FORM_IMAGE_ORIGIN + imagePath, {
+      credentials: 'omit', redirect: 'error', cache: 'no-store', referrerPolicy: 'no-referrer', signal: controller.signal
+    });
+    if (!response.ok) return { ok: false, error: 'IMAGE_HTTP_' + response.status };
+    const mime = (response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(mime)) return { ok: false, error: 'IMAGE_FORMAT' };
+    const maximum = 4 * 1024 * 1024;
+    if (Number(response.headers.get('content-length')) > maximum) return { ok: false, error: 'IMAGE_DOWNLOAD_TOO_LARGE' };
+    if (!response.body) return { ok: false, error: 'IMAGE_EMPTY' };
+    const reader = response.body.getReader();
+    const chunks = []; let length = 0;
+    try {
+      while (true) {
+        const { value, done } = await reader.read(); if (done) break;
+        length += value.length;
+        if (length > maximum) { await reader.cancel(); return { ok: false, error: 'IMAGE_DOWNLOAD_TOO_LARGE' }; }
+        chunks.push(value);
+      }
+    } finally { reader.releaseLock(); }
+    const bytes = new Uint8Array(length); let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+    const signature = mime === 'image/jpeg' ? bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255 :
+      mime === 'image/png' ? [137,80,78,71,13,10,26,10].every((value, i) => bytes[i] === value) :
+      length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP';
+    if (!signature) return { ok: false, error: 'IMAGE_FORMAT' };
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+    return { ok: true, dataUrl: `data:${mime};base64,${btoa(binary)}` };
+  } catch (error) { return { ok: false, error: error?.name === 'AbortError' ? 'IMAGE_DOWNLOAD_TIMEOUT' : 'IMAGE_DOWNLOAD_FAILED' }; }
+  finally { controller.abort(); clearTimeout(timer); activeImageLoads--; }
+}
 
 chrome.action.onClicked.addListener(async (tab) => {
   await armSelection(tab);
@@ -28,7 +77,9 @@ async function armSelection(tab) {
   const settings = await chrome.storage.local.get({
     bridgeToken: "",
     applyAnswers: false,
-    matrixTestMode: false
+    matrixTestMode: false,
+    allowBrowserImages: false,
+    diagnosticMode: false
   });
   if (!isValidToken(settings.bridgeToken)) {
     await chrome.runtime.openOptionsPage();
@@ -45,7 +96,9 @@ async function armSelection(tab) {
       });
       await chrome.tabs.sendMessage(tab.id, {
         type: "AIVSP_BEGIN_SELECTION",
-        matrixTestMode: settings.matrixTestMode === true
+        matrixTestMode: settings.matrixTestMode === true,
+        allowBrowserImages: settings.allowBrowserImages === true,
+        diagnosticMode: settings.diagnosticMode === true
       }, { frameId: frame.frameId });
     }));
     if (!results.some((result) => result.status === "fulfilled")) {
@@ -61,6 +114,10 @@ async function armSelection(tab) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === 'AIVSP_FETCH_FORM_IMAGE') {
+    fetchFormImage(message.imagePath, sender).then(sendResponse).catch(() => sendResponse({ ok: false, error: 'IMAGE_DOWNLOAD_FAILED' }));
+    return true;
+  }
   if (message?.type === "AIVSP_TEST_DIAGNOSTIC" && sender.tab?.id) {
     diagnosticWrites = diagnosticWrites.catch(() => {}).then(async () => {
       const allowed = ["selection_started", "target_clicked", "extraction_failed", "matrix_missing",
@@ -96,7 +153,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function assist(payload, tabId) {
   const settings = await chrome.storage.local.get({
     bridgeToken: "",
-    applyAnswers: false
+    applyAnswers: false,
+    allowBrowserImages: false
   });
   if (!isValidToken(settings.bridgeToken)) {
     await chrome.runtime.openOptionsPage();
@@ -107,12 +165,19 @@ async function assist(payload, tabId) {
   if (validationError) {
     return { ok: false, error: validationError };
   }
+  if (payload.images?.length && settings.allowBrowserImages !== true) return { ok: false, error: "images_not_enabled" };
 
   await setBadge(tabId, "…", "#0369a1");
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
+    if (payload.multipleAnswers || payload.images?.length) {
+      const statusResponse = await fetch(`${BRIDGE_URL}/v1/status`, { headers: { "Authorization": `Bearer ${settings.bridgeToken}` }, cache: "no-store", signal: controller.signal });
+      const status = await statusResponse.json();
+      if (!statusResponse.ok || status.browserProtocolVersion !== 2) return { ok: false, error: "app_upgrade_required" };
+      if (status.provider !== "AntigravityCli") return { ok: false, error: "acp_provider_required" };
+    }
     const response = await fetch(`${BRIDGE_URL}/v1/assist`, {
       method: "POST",
       headers: {
@@ -129,6 +194,7 @@ async function assist(payload, tabId) {
       return {
         ok: false,
         error: body.error || `http_${response.status}`,
+        reason: typeof body.reason === 'string' && /^[a-z_]{1,48}$/.test(body.reason) ? body.reason : null,
         correlationId: body.correlationId || null
       };
     }
@@ -160,6 +226,11 @@ async function assist(payload, tabId) {
 }
 
 function isValidResult(result, payload) {
+  if (payload.mode === 1 && payload.multipleAnswers) {
+    if (!Array.isArray(result?.optionKeys) || !result.optionKeys.length || result.optionKeys.length > payload.options.length ||
+        new Set(result.optionKeys.map(key => String(key).toUpperCase())).size !== result.optionKeys.length ||
+        result.optionKeys.some(key => typeof key !== "string" || !payload.options.some(option => option.key.toUpperCase() === key.toUpperCase()))) return false;
+  }
   return result && typeof result === "object" &&
     result.contextId === payload.contextId && result.mode === payload.mode &&
     typeof result.answer === "string" && result.answer.trim().length > 0 &&
@@ -172,6 +243,10 @@ function validatePayload(payload) {
   if (!payload || typeof payload !== "object") {
     return "invalid_payload";
   }
+  if (payload.multipleAnswers !== undefined && typeof payload.multipleAnswers !== "boolean") return "invalid_mode";
+  if (payload.multipleAnswers && payload.mode !== 1) return "invalid_mode";
+  if (payload.images !== undefined && (!Array.isArray(payload.images) || payload.images.length > 2 || payload.images.some(image =>
+    !image || !["image/png", "image/jpeg"].includes(image.mimeType) || typeof image.data !== "string" || !image.data.length || image.data.length > 700000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(image.data)))) return "invalid_image";
   if (typeof payload.contextId !== "string" ||
       payload.contextId.length < 1 ||
       payload.contextId.length > 128) {

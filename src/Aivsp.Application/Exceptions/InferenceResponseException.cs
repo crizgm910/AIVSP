@@ -4,6 +4,8 @@ namespace Aivsp.Application.Exceptions;
 
 public sealed class InferenceResponseException : Exception
 {
+    public string? ReasonCode { get; init; }
+
     public InferenceResponseException(string message)
         : base(message)
     {

@@ -8,4 +8,10 @@ public sealed record BrowserQuestionRequest(
     AssistanceMode Mode,
     string Question,
     IReadOnlyList<BrowserOptionInput> Options,
-    string? InputPlaceholder);
+    string? InputPlaceholder,
+    IReadOnlyList<BrowserImageInput>? Images = null,
+    bool MultipleAnswers = false);
+
+public sealed record BrowserImageInput(string MimeType, string Data);
+
+public sealed record BrowserInferenceAnswer(string Answer, IReadOnlyList<string> OptionKeys, double Confidence);

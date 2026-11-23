@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Aivsp.Application.Configuration;
 using Aivsp.Domain.Enums;
 
@@ -13,4 +14,5 @@ public sealed record BrowserAssistanceResult(
     double Confidence,
     long DurationMilliseconds,
     InferenceProvider Provider,
-    OverlayProfile OverlayProfile);
+    OverlayProfile OverlayProfile,
+    IReadOnlyList<string>? OptionKeys = null);

@@ -4,6 +4,8 @@ const BRIDGE_URL = "http://127.0.0.1:18791";
 const tokenInput = document.getElementById("bridge-token");
 const applyAnswersInput = document.getElementById("apply-answers");
 const matrixTestModeInput = document.getElementById("matrix-test-mode");
+const allowBrowserImagesInput = document.getElementById("allow-browser-images");
+const diagnosticModeInput = document.getElementById("diagnostic-mode");
 const statusOutput = document.getElementById("status");
 
 initialize();
@@ -11,10 +13,17 @@ initialize();
 document.getElementById("save").addEventListener("click", save);
 document.getElementById("test").addEventListener("click", testConnection);
 document.getElementById("refresh-diagnostics").addEventListener("click", refreshDiagnostics);
+document.getElementById("enable-forms-images").addEventListener("click", async () => {
+  try {
+    const granted = await chrome.permissions.request({ origins: ['https://hive.forms.usercontent.microsoft/*'] });
+    showStatus(granted ? "Servidor de imágenes Forms autorizado. Recarga el formulario y vuelve a seleccionar la pregunta."
+      : "Permiso de imágenes no concedido. No se descargarán desde la extensión.", granted);
+  } catch { showStatus("No se pudo solicitar permiso de imágenes. Recarga la extensión.", false); }
+});
 document.getElementById("enable-microsoft-frames").addEventListener("click", async () => {
   try {
     const granted = await chrome.permissions.request({
-      origins: chrome.runtime.getManifest().optional_host_permissions
+      origins: chrome.runtime.getManifest().optional_host_permissions.filter(origin => origin !== 'https://hive.forms.usercontent.microsoft/*')
     });
     showStatus(granted ? "Forms y Teams habilitados. Actualiza la tarea."
       : "Acceso no concedido. Abre Forms en una pestaña independiente.", granted);
@@ -27,11 +36,15 @@ async function initialize() {
   const settings = await chrome.storage.local.get({
     bridgeToken: "",
     applyAnswers: false,
-    matrixTestMode: false
+    matrixTestMode: false,
+    allowBrowserImages: false,
+    diagnosticMode: false
   });
   tokenInput.value = settings.bridgeToken;
   applyAnswersInput.checked = settings.applyAnswers === true;
   matrixTestModeInput.checked = settings.matrixTestMode === true;
+  allowBrowserImagesInput.checked = settings.allowBrowserImages === true;
+  diagnosticModeInput.checked = settings.diagnosticMode === true;
   await refreshDiagnostics();
 }
 
@@ -53,7 +66,9 @@ async function save() {
   await chrome.storage.local.set({
     bridgeToken,
     applyAnswers: applyAnswersInput.checked,
-    matrixTestMode: matrixTestModeInput.checked
+    matrixTestMode: matrixTestModeInput.checked,
+    allowBrowserImages: allowBrowserImagesInput.checked,
+    diagnosticMode: diagnosticModeInput.checked
   });
   showStatus("Configuración guardada localmente.", true);
 }

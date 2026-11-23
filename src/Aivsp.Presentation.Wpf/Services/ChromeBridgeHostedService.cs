@@ -19,7 +19,7 @@ namespace Aivsp.Presentation.Wpf.Services;
 public sealed class ChromeBridgeHostedService : IHostedService, IDisposable
 {
     public const int Port = 18791;
-    private const long MaximumRequestBodyBytes = 64 * 1024;
+    private const long MaximumRequestBodyBytes = 1536 * 1024;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -337,17 +337,16 @@ public sealed class ChromeBridgeHostedService : IHostedService, IDisposable
         {
             _logger.LogError(
                 ex,
-                "Chrome DOM inference response invalid. CorrelationId: {CorrelationId}.",
-                correlationId);
+                "Chrome DOM inference response invalid. CorrelationId: {CorrelationId}; Reason: {Reason}.",
+                correlationId, ex.ReasonCode);
             Notify(
                 NotificationStatus.Error,
                 NotificationCode.InvalidInferenceResponse,
                 correlationId);
-            await WriteErrorAsync(
+            await WriteJsonAsync(
                 context.Response,
                 HttpStatusCode.BadGateway,
-                "invalid_inference_response",
-                correlationId,
+                new BridgeErrorResponse("invalid_inference_response", correlationId, ex.ReasonCode),
                 cancellationToken);
         }
         catch (Exception ex)
@@ -437,7 +436,8 @@ public sealed class ChromeBridgeHostedService : IHostedService, IDisposable
         string Service,
         bool Enabled,
         string Provider,
-        string Overlay);
+        string Overlay,
+        int BrowserProtocolVersion = 2);
 
-    private sealed record BridgeErrorResponse(string Error, Guid? CorrelationId);
+    private sealed record BridgeErrorResponse(string Error, Guid? CorrelationId, string? Reason = null);
 }

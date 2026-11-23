@@ -2,6 +2,90 @@
 
 Estados: `Pendiente`, `En progreso`, `Bloqueada`, `Terminada`.
 
+Confirmación registrada el 23 de noviembre de 2026: última prueba del usuario
+aprobada en Forms directo. Teams real y persistencia allí siguen pendientes.
+
+## Plan: endurecimiento para Teams SPA — 2026-11-21
+
+- [x] Confirmación del usuario: opción múltiple funcionando; imagen/desplegable previamente confirmado.
+- [x] Reproducir navegación entre asignaciones con DOM conservado y estímulos ocultos de otra vista.
+- [x] Corregir solo fallos demostrados y conservar imagen fuera de pantalla, pero visible en el documento.
+- [x] Probar preguntas largas, ráfagas, cambios de campo y regresiones de marcos/imágenes.
+- [x] Preparar ZIP 0.3.8 y lista de comprobación real Teams; 190 pruebas .NET y suites de navegador aprobadas.
+- [ ] Validación física del marco/tarea Teams y persistencia con Siguiente/Atrás.
+
+## Plan: opciones y estímulo separado — 2026-11-20
+
+- [x] Usuario confirma imagen/desplegable funcionando; opciones fallan al detectarlas.
+- [x] Probar etiquetas aria-labelledby, controles ocultos con etiqueta visible y controles anidados.
+- [x] Corregir únicamente fallos reproducidos de detección, sin alterar inferencia.
+- [x] Probar imagen anterior fuera de pantalla con tres preguntas y límites entre imágenes.
+- [x] Validar regresiones y preparar extensión 0.3.7; Forms/Teams reales requieren confirmación física.
+- [x] Usuario confirma detección real de opción múltiple.
+- [ ] Confirmar físicamente imagen separada compartida por tres preguntas.
+
+## Plan: confirmar selección asíncrona Forms — 2026-11-20
+
+- [x] Captura real: Saturno seleccionado, pero aviso de cambio no confirmado.
+- [x] Reproducir actualización posterior al clic y corregir espera sin repetir acciones.
+- [x] Mantener aviso si no hay cambio; ignorar confirmaciones de una activación anterior.
+- [x] Probar y preparar extensión 0.3.6 sin cambiar ejecutable ni token.
+- [ ] Confirmar resultado real y persistencia al navegar en Forms.
+
+## Plan: rechazo de respuesta visual — 2026-11-20
+
+- [x] Logs ee49f39b: JSON interpretado; rechazo posterior por contrato de opciones.
+- [x] Reproducir extracción de título genérico Pregunta frente a enunciado descriptivo.
+- [x] Preservar validación; exponer motivo estructural sin preguntas/respuestas en logs.
+- [x] Probar extracción, rechazos y consulta real ACP; preparar app alpha.2/extensión 0.3.5.
+- [ ] Repetir Forms real y confirmar selección; no inferir éxito por recibir JSON.
+
+## Plan: acceso limitado al CDN de imágenes Forms — 2026-11-20
+
+- [x] GET de la imagen proporcionada: JPEG 37723 bytes, HTTP 200 sin autenticación; sin cabecera CORS.
+- [x] Permiso opcional exacto a hive.forms.usercontent.microsoft, concedido por botón separado.
+- [x] Broker de imágenes: origen emisor Forms/Teams, rutas /images, sin cookies/redirecciones, límites y formato validado.
+- [x] Usar los bytes solo ante fallo CORS y consentimiento activo; no registrar URL/píxeles.
+- [x] Probar permiso denegado/concedido, peticiones inválidas, límites y regresiones; preparar extensión 0.3.4.
+- [ ] Confirmar físicamente la imagen del Forms del usuario.
+
+## Plan: carga y diagnóstico de imágenes — 2026-11-20
+
+- [x] Confirmar que Forms ya abre el menú; el fallo actual es adjuntar la imagen.
+- [x] Separar tamaño, canvas, carga, tiempo de espera y lectura bloqueada por CORS.
+- [x] Reducir imágenes grandes dentro del límite existente; no ampliar permisos.
+- [x] Probar imágenes de distinto origen con/sin CORS y errores/cancelación.
+- [x] Preparar extensión 0.3.3 y ZIP; diez casos de imagen, regresiones y laboratorio aprobados.
+- [ ] Repetir el Forms real y obtener código preciso; no declarar resuelto antes.
+
+## Plan: desplegables personalizados Forms — 2026-11-20
+
+- [x] Error real obtenido: no reconoce opciones ni campo, antes de la inferencia.
+- [x] Reconocer disparadores listbox/combobox y esperar opciones cargadas al abrir.
+- [x] Asociar portales por ARIA o por aparición inequívoca; rechazar ambigüedad.
+- [x] Probar extracción, aplicación, cancelación y aislamiento de menús vecinos.
+- [x] Preparar extensión 0.3.2 y ZIP independiente, sin cambiar ejecutable/token.
+- [x] Repetir físicamente el Forms: el menú abre; avanza hasta adjuntar la imagen.
+- [ ] Confirmar marcado tras resolver la carga de imagen del formulario real.
+
+## Plan: diagnóstico de fallo real en Forms — 2026-11-20
+
+- [x] Confirmar extensión 0.3.0, consentimiento y aplicación activados en las capturas.
+- [x] Añadir diagnóstico visual opcional sin habilitar el clic fijo de matrices.
+- [x] Probar persistencia, propagación, errores visibles y modo discreto predeterminado.
+- [x] Obtener el mensaje del formulario real antes de modificar su extractor.
+
+## Plan: integración DOM visual y opciones avanzadas — 2026-11-20
+
+- [x] Contrato compatible: imágenes acotadas y varias opciones seleccionadas.
+- [x] Cliente ACP C# aislado: modelo/esfuerzo explícitos, permisos denegados, cancelación y JSON validado.
+- [x] Contenedor por pregunta; corregir captura de matriz vecina sin tocar OCR.
+- [x] Desplegables HTML/ARIA y casillas múltiples con comprobación del contexto original.
+- [x] Imagen propia o bloque anterior sin controles; abortar si falta contexto o acceso.
+- [x] Consentimiento de adjuntar imágenes, pruebas automatizadas y prueba real .NET/ACP.
+- [x] Publicar paquete de prueba separado v0.3.0-alpha.1 con extensión 0.3.0.
+- [ ] Verificar físicamente Teams antes de declararlo compatible.
+
 ## Plan: prueba aislada de imágenes con Antigravity ACP — 2026-11-20
 
 - [x] Negociar capacidades ACP sin acceso a archivos/terminal del cliente.
@@ -9,9 +93,9 @@ Estados: `Pendiente`, `En progreso`, `Bloqueada`, `Terminada`.
 - [x] Enviar imagen sintética con código aleatorio no incluido en el texto; coincidencia exacta.
 - [x] Probar imagen espacial con Gemini 3.8 Flash y nivel bajo, sin fallback silencioso.
 - [x] Documentar resultado real, límites y limpieza; app/extensión permanecen sin cambios.
-- [ ] Integrar cliente ACP de producción con límites, cancelación y validación estructurada.
-- [ ] Transportar imágenes y asociación de estímulos en el puente extensión/app.
-- [ ] Añadir contratos de varias respuestas y controles desplegables, con pruebas de regresión.
+- [x] Integrar cliente ACP de producción con límites, cancelación y validación estructurada.
+- [x] Transportar imágenes y asociación de estímulos en el puente extensión/app.
+- [x] Añadir contratos de varias respuestas y controles desplegables, con pruebas de regresión.
 - [ ] Validar el flujo completo en laboratorio y después en un formulario real de Teams.
 
 ## Plan: imagen espacial y asociación implícita — 2026-11-20
@@ -29,8 +113,8 @@ Estados: `Pendiente`, `En progreso`, `Bloqueada`, `Terminada`.
 - [x] Incluir iframes de mismo origen y origen distinto, sin simular que sean Teams.
 - [x] Permitir registrar y exportar resultados manuales, sin enviar formularios.
 - [x] Validar el laboratorio en Chrome headless y regresiones sin cambiar el extractor.
-- [ ] Corregir por separado el fallo reproducido: matriz vecina captura preguntas normales.
-- [ ] Implementar selección múltiple, desplegables e imágenes compartidas tras definir contratos y pruebas.
+- [x] Corregir por separado el fallo reproducido: matriz vecina captura preguntas normales.
+- [x] Implementar selección múltiple, desplegables e imágenes compartidas tras definir contratos y pruebas.
 
 ## Plan: diagnosticar matriz real de Teams — 2026-10-23
 

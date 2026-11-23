@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Aivsp.Application.Configuration;
 using Aivsp.Application.Contracts;
+using Aivsp.Application.Exceptions;
 using Aivsp.Domain.Entities;
 using Aivsp.Domain.Enums;
 using Aivsp.Domain.ValueObjects;
@@ -23,15 +24,18 @@ public sealed partial class BrowserDomAssistantService
     private readonly IInferenceService _inferenceService;
     private readonly AssistantOptions _options;
     private readonly ILogger<BrowserDomAssistantService> _logger;
+    private readonly IBrowserAdvancedInferenceService? _advanced;
 
     public BrowserDomAssistantService(
         IInferenceService inferenceService,
         AssistantOptions options,
-        ILogger<BrowserDomAssistantService> logger)
+        ILogger<BrowserDomAssistantService> logger,
+        IBrowserAdvancedInferenceService? advanced = null)
     {
         _inferenceService = inferenceService;
         _options = options;
         _logger = logger;
+        _advanced = advanced;
     }
 
     public async Task<BrowserAssistanceResult> AssistAsync(
@@ -55,10 +59,34 @@ public sealed partial class BrowserDomAssistantService
         timeoutCts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
 
         _logger.LogInformation(
-            "Procesando contexto DOM. Mode: {Mode}; OptionCount: {OptionCount}; Provider: {Provider}.",
+            "Procesando contexto DOM. Mode: {Mode}; OptionCount: {OptionCount}; Provider: {Provider}; QuestionLength: {QuestionLength}; ImageCount: {ImageCount}; MultipleAnswers: {MultipleAnswers}.",
             request.Mode,
             request.Options.Count,
-            _options.InferenceProvider);
+            _options.InferenceProvider, request.Question.Length, request.Images?.Count ?? 0, request.MultipleAnswers);
+
+        if (request.MultipleAnswers || request.Images?.Count > 0)
+        {
+            if (_options.InferenceProvider != InferenceProvider.AntigravityCli || _advanced == null)
+                throw new InferenceUnavailableException("Browser images and multiple answers require Antigravity ACP.");
+            var answer = await _advanced.InferAsync(request, _options, timeoutCts.Token);
+            timeoutCts.Token.ThrowIfCancellationRequested();
+            var rejection = string.IsNullOrWhiteSpace(answer.Answer) ? "empty_answer" :
+                !double.IsFinite(answer.Confidence) || answer.Confidence is < 0 or > 1 ? "invalid_confidence" :
+                answer.OptionKeys == null ? "missing_option_keys" :
+                answer.OptionKeys.Distinct(StringComparer.OrdinalIgnoreCase).Count() != answer.OptionKeys.Count ? "duplicate_option_keys" :
+                answer.OptionKeys.Any(key => !request.Options.Any(option => string.Equals(option.Key, key, StringComparison.OrdinalIgnoreCase))) ? "unknown_option_key" :
+                request.Mode == AssistanceMode.OpenText && answer.OptionKeys.Count != 0 ? "unexpected_open_keys" :
+                request.Mode == AssistanceMode.MultipleChoice && answer.OptionKeys.Count == 0 ? (answer.Confidence == 0 ? "insufficient_context" : "no_option_selected") :
+                request.Mode == AssistanceMode.MultipleChoice && !request.MultipleAnswers && answer.OptionKeys.Count != 1 ? "too_many_option_keys" : null;
+            if (rejection != null)
+            {
+                _logger.LogWarning("Browser answer rejected. Reason: {Reason}; ReturnedKeyCount: {KeyCount}.", rejection, answer.OptionKeys?.Count ?? -1);
+                throw new InferenceResponseException("ACP response does not match the selected browser controls.") { ReasonCode = rejection };
+            }
+            return new BrowserAssistanceResult(correlationId, request.ContextId, request.Mode, answer.Answer,
+                answer.OptionKeys?.FirstOrDefault(), answer.Confidence, stopwatch.ElapsedMilliseconds,
+                _options.InferenceProvider, _options.OverlayProfile, answer.OptionKeys);
+        }
 
         var output = await _inferenceService.InferActionAsync(
             "Responde a la pregunta seleccionada en el navegador",
@@ -171,6 +199,21 @@ public sealed partial class BrowserDomAssistantService
     private static void Validate(BrowserQuestionRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (request.MultipleAnswers && request.Mode != AssistanceMode.MultipleChoice)
+            throw new ArgumentException("Multiple answers require selectable options.");
+        if (request.Images?.Count > 2) throw new ArgumentException("Too many browser images.");
+        foreach (var image in request.Images ?? Array.Empty<BrowserImageInput>())
+        {
+            if (image == null || image.MimeType is not ("image/png" or "image/jpeg") ||
+                string.IsNullOrEmpty(image.Data) || image.Data.Length > 700_000)
+                throw new ArgumentException("Invalid browser image.");
+            byte[] bytes;
+            try { bytes = Convert.FromBase64String(image.Data); }
+            catch (FormatException) { throw new ArgumentException("Invalid browser image encoding."); }
+            var png = bytes.Length >= 8 && bytes.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 });
+            var jpeg = bytes.Length >= 3 && bytes[0] == 255 && bytes[1] == 216 && bytes[2] == 255;
+            if (!(image.MimeType == "image/png" ? png : jpeg)) throw new ArgumentException("Browser image signature mismatch.");
+        }
         if (string.IsNullOrWhiteSpace(request.ContextId) || request.ContextId.Length > 128)
         {
             throw new ArgumentException("Browser context id is missing or too long.", nameof(request));
